@@ -1,12 +1,12 @@
 # Pathways user journeys
 
-Planning baseline, 28 October 2026. Audience: parents and invested youth exploring subject choices together. Pathways is the first product to develop; Atlas has a grey **Coming soon** placeholder in the shared entry area. Its existing prototype and attribution remain in `student-pathway-atlas/` for later work.
+Planning baseline refreshed 3 November 2026 against Evan’s modular version (`edcf8e8`). Audience: parents and invested youth exploring subject choices together. Pathways is the first product to develop; Atlas has a grey **Coming soon** placeholder in the shared entry area. Its existing prototype and attribution remain in `student-pathway-atlas/` for later work.
 
 This document separates source-observed behaviour from proposed acceptance criteria. It does not certify admissions rules or report completed feature work.
 
 ## Source and ownership
 
-- [`index.html`](../index.html): `SUB`, `PATHS`, `evaluate()`, `COURSES_DATA`, `renderRows()`, `setMobTab()`, `setReverseMode()`, `loadSaved()`, `toggleCompare()`, `loadCourseIntoSubjects()`.
+- [`Evan - Pathways/index.html`](../Evan%20-%20Pathways/index.html), `src/main.js`, `src/engine/`, `src/data/`, `src/utils/db.js`: `SUB`, `PATHS`, `evaluate()`, `COURSES_DATA`, `renderRows()`, `setMobTab()`, `setReverseMode()`, `loadSaved()`, `toggleCompare()`, `loadCourseIntoSubjects()`.
 - [`README.md`](../README.md): prototype status, local opening instructions, intended benchmarking and attribution.
 - [`student-pathway-atlas/README.md`](../student-pathway-atlas/README.md): the separate results-day Atlas prototype and its stated coverage; those claims have not been independently verified here.
 - Preserve **Evan Liao** for the Sec 2 adaptation, reverse planning and interface; **Mathew Lim** for the original explorer, evaluation model and baseline data; **Koo Tiannuo** for Atlas. Keep original in-app credits identifiable when sharing components.
@@ -23,7 +23,7 @@ This document separates source-observed behaviour from proposed acceptance crite
 
 **Goal:** A parent/youth arriving on a phone understands Pathways, its cohort and its limits before entering a plan.
 
-**Current:** `#mainView` supports subject-first exploration. `#rpOpen` switches to destination-first planning. The header states that this is not an MOE webapp, but `header p.subhead` is hidden by the mobile media rule. The review branch adds the Pathways/Atlas entry area.
+**Current:** `#mainView` supports subject-first exploration. `#btnModeCourse` switches to destination-first planning; `#btnModeCareer` opens career ladders/islands. Detailed Grades and CCA are existing options. The header states that this is not an MOE webapp, but `header p.subhead` is hidden by the mobile media rule. The review branch adds the Pathways/Atlas entry area to this new entry; the root entry stays removed and `indexOLD.html` stays unchanged.
 
 **Proposed acceptance:**
 
@@ -35,7 +35,7 @@ This document separates source-observed behaviour from proposed acceptance crite
 
 **Goal:** Understand how selecting subjects at G1/G2/G3 affects possible routes, without needing an exact final results slip.
 
-**Current:** `#rows` and `renderRows()` provide subject/level/pass-fail controls and electives. Presets populate sample combinations. `evaluate()` feeds prerequisite results and missing conditions into `#okCards` and `#badCards`. Mobile uses `setMobTab()` to move between subjects and results. The footer explains the pass/fail simplification.
+**Current:** `#rows` and `renderRows()` provide subject/level/pass-fail controls and electives. Presets populate sample combinations. `evaluate()` feeds prerequisite results and missing conditions into `#okCards` and `#badCards`. Mobile uses `setMobTab()` to move between subjects and results. The footer explains the pass/fail simplification. Detailed mode adds level-specific grades and aggregate displays. Switching from pass/fail can currently populate example grades; these must not be represented as actual entered results.
 
 **Proposed acceptance:**
 
@@ -63,6 +63,8 @@ This document separates source-observed behaviour from proposed acceptance crite
 
 **Tests to specify:** filter plus search; no matches; inspect/close; apply to blank plan; replace/cancel/recover an existing plan; unsupported destination/ruleset.
 
+Career mode is existing behaviour to preserve and smoke-test, including its cluster selection and return to Results. New career features and independent verification of career progression claims remain outside this placeholder change.
+
 ## J4 — Compare possible destinations
 
 **Goal:** A parent and young person compare options using consistent, understandable criteria.
@@ -82,14 +84,14 @@ This document separates source-observed behaviour from proposed acceptance crite
 
 **Goal:** Keep a plan without an account, share a readable summary with family, and reopen an editable copy later.
 
-**Current:** `#save` writes subject rows under `sec_pathway_grades`; `loadSaved()` restores a compatible row count. `#reset` clears the subject save. Storage failures are caught without a user-facing explanation. There is no plan-file import/export or dedicated summary PDF flow in the source.
+**Current:** `render()` calls `autoSave()` in `src/main.js`, writing rows, detailed-mode and CCA to localStorage and IndexedDB through `src/utils/db.js`. `initApp()` can restore IndexedDB over the localStorage baseline. Save calls autoSave; Reset clears saved rows/CCA and IndexedDB then renders. Save feedback does not prove write success; validation remains limited. There is no plan-file import/export or dedicated summary PDF flow in the source.
 
 **Proposed acceptance:**
 
 - Explain that browser Save is local to this browser/device and can be removed by Reset or browser data clearing. Show success or a recoverable storage error truthfully.
 - Offer a readable summary PDF, initially through a tested print/save-to-PDF layout, and a separate structured plan-file export for reopening. PDF import is outside the initial scope.
 - The summary includes subject assumptions, selected destinations/comparison, limitations, source references, creation date, exam year, admissions year, ruleset version and app version. Names and contact details are not required.
-- The structured file has an explicit schema version and the same cohort/rules provenance, plus the subject and comparison state needed for a round trip. Saving uses local browser/file APIs; Neon is unnecessary for this journey.
+- The structured file has an explicit schema version and the same cohort/rules provenance, plus the subject/grade state, grade provenance, detailed-mode, CCA, current mode, career cluster and comparison state needed for a round trip. Saving uses local browser/file APIs; Neon is unnecessary for this journey.
 - Import validates file size, format, schema, allowed subject keys/levels and field types before changing a plan. Unknown future schemas and malformed files produce readable errors and preserve existing work.
 - Preview a valid import before replacement. If its ruleset differs, explain the mismatch and require an explicit supported recalculation choice. Profile identifiers are immutable/versioned; reject incompatible profiles unless a tested migration is explicitly supported. Use the normalised effective-state adapter in the data model when serialising runtime rows, rather than exporting stale hidden fields. Do not present an imported result snapshot as freshly verified output.
 - Import/export works without uploading the plan. A user can inspect/share/delete the exported file themselves.

@@ -16,7 +16,7 @@ prototypes and do not merge their engines in this slice.
 - **Language/Version**: Existing HTML/CSS and browser JavaScript; Python 3/Node are
   already used by Atlas. No application dependency or framework migration in this PR.
 - **Primary Dependencies**: Browser APIs and current Google Fonts; no new runtime dependencies.
-- **Storage**: Existing `sec_pathway_grades` localStorage; future local versioned plan files.
+- **Storage**: Existing localStorage and IndexedDB via `src/utils/db.js`, including rows, detailed-grade mode and CCA; future local versioned plan files.
 - **Testing**: Current PR uses source-diff checks and browser verification. Future
   meaningful rule fixtures and browser journeys are specified in [test-matrix.md](test-matrix.md).
 - **Target Platform**: Mobile Safari/Chrome and current desktop browsers; verify physical
@@ -41,8 +41,10 @@ prototypes and do not merge their engines in this slice.
 ## Project Structure
 
 ```text
-index.html                         # Pathways UI and current inline evaluator
-background.png, logo.png           # Existing Pathways assets
+Evan - Pathways/index.html          # Active module-based entry
+Evan - Pathways/src/                # Orchestrator, engines, data and IndexedDB helper
+Evan - Pathways/css/                # Existing CSS plus isolated availability stylesheet
+Evan - Pathways/indexOLD.html       # Unchanged archived single-file prototype
 student-pathway-atlas/              # Preserved Atlas source, artifact and tests
 .specify/                          # Project constitution, templates and workflow
 .agents/skills/speckit-*/           # Generated Codex workflow skills
@@ -51,10 +53,11 @@ docs/pathways-journeys.md           # Current and proposed journeys
 docs/pathways-ux-backlog.md         # Prioritised issues and evidence
 ```
 
-Keep the existing entry in place. Add a small product-availability section before
-its header rather than moving files or introducing a router. A later implementation
-may extract pure rule/export helpers when required by meaningful tests; any such
-extraction must retain behaviour and is separate from this PR.
+Keep Evan’s module-based entry and add a small product-availability section before
+its header. Do not restore the removed root entry or modify `indexOLD.html`. Use the
+existing `src/engine/` modules for rule fixtures; no evaluator extraction or framework
+rewrite is needed. Preserve the Results/Course/Career modes, detailed grades, CCA
+and browser persistence. Serve over HTTP because the app uses ES modules.
 
 ## Phase 0: Research and Clarification
 

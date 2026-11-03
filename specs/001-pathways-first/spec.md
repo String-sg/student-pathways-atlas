@@ -4,6 +4,8 @@
 
 **Created**: 2026-10-28
 
+**Updated**: 2026-11-03; aligned to Evan’s modular entry at `edcf8e8`.
+
 **Status**: Draft for review; only the product availability placeholder is implemented here.
 
 **Input**: Prioritise Pathways for parents and invested youth, show Atlas greyed out
@@ -34,7 +36,7 @@ Atlas is visibly unavailable and cannot navigate anywhere.
 
 ### User Story 2 - Understand what subject choices keep open (Priority: P1)
 
-A parent or young person selects subjects and levels, explores possible passes,
+A parent or young person selects subjects and levels, explores illustrative passes or detailed grades/CCA,
 understands the explanation, and knows which official information to check next.
 
 **Why this priority**: This is Pathways' core planning purpose. A simplified result
@@ -89,7 +91,7 @@ and verify that choices and comparisons are restored with the right version labe
    the chosen subjects, relevant explanations, comparison selections, years, rules
    version and limitations; partial work is labelled as such.
 2. **Given** an exported plan file, **When** opening it in a fresh session, **Then**
-   supported choices and comparisons can be restored after a replacement preview.
+   supported choices, detailed-grade mode, exact entered grades, CCA, current mode, career cluster and comparisons can be restored after a replacement preview.
 3. **Given** an invalid, unsupported or older file, **When** importing it, **Then** the
    page explains the problem or version mismatch and does not overwrite current work.
 
@@ -112,7 +114,7 @@ and verify that choices and comparisons are restored with the right version labe
   non-interactive "Coming soon" placeholder with a description of its future purpose.
 - **FR-002**: Planning MUST be accessible without sign-in and MUST retain visible
   attribution to Evan Liao, Mathew Lim and Koo Tiannuo in the appropriate contexts.
-- **FR-003**: Subjects, levels and illustrative outcomes MUST remain editable;
+- **FR-003**: Subjects, levels, illustrative outcomes, detailed grades and CCA MUST remain editable;
   unset values MUST remain distinguishable from failed or not-taken subjects.
   Existing browser Save/restore/reset MUST explain device-local scope, validate
   restored choices, and report storage failure without silently discarding current work.
@@ -139,7 +141,8 @@ and verify that choices and comparisons are restored with the right version labe
 
 - **Product availability**: current Pathways entry and unavailable Atlas entry.
 - **Planning profile**: subject offerings, restrictions, exam/admission-year labels and rules version.
-- **Subject choice**: subject, offered level, taken/unset state and illustrative pass/fail choice.
+- **Subject choice**: subject, offered level, taken/unset state, illustrative pass/fail or entered detailed grade.
+- **Planning settings**: pass/fail versus detailed-grade mode, CCA choice, Results/Course/Career mode and career cluster.
 - **Destination comparison**: selected destination identifiers with requirements and source references.
 - **Saved plan**: versioned inputs and comparisons, without identity details or trusted computed outcomes.
 - **Readable summary**: dated explanation of the plan, sources and its limits for discussion.
@@ -152,7 +155,7 @@ and verify that choices and comparisons are restored with the right version labe
   Atlas has zero navigation targets and Pathways remains directly usable.
 - **SC-002**: Every core scenario in the test matrix completes without unreachable
   actions, loss of choices, hidden essential explanations or document-wide overflow.
-- **SC-003**: All supported export/import fixtures restore the same inputs and
+- **SC-003**: All supported export/import fixtures restore the same inputs, modes, CCA and
   comparisons; all invalid or incompatible fixtures leave existing work unchanged.
 - **SC-004**: All rule cases selected for release have a dated source, independent
   reviewer and passing expected outcome. Unresolved cases are explicitly unsupported.
@@ -162,7 +165,7 @@ and verify that choices and comparisons are restored with the right version labe
 
 ## Assumptions
 
-- The default language is English. Pathways' current Sec 2 purpose guides the first slice.
+- The default language is English. Pathways’ Sec 2 purpose guides the first slice. Evan’s detailed-grade, CCA and career modes are existing behaviour to preserve, not new features delivered by this PR.
 - "Export" is provisionally a readable PDF/print summary plus an editable plan file;
   this is a reviewable proposal rather than an implemented feature.
 - Preserve current year labels while auditing their intended meaning; do not infer

@@ -1,14 +1,14 @@
 # Pathways UX backlog and prioritisation
 
-Planning baseline, 28 October 2026. Work is ordered by decision harm, task completion, reach and then convenience. These are proposed implementation priorities; this planning PR does not claim that the backlog is fixed or that embedded admissions data is accurate.
+Planning baseline refreshed 3 November 2026 for Evan’s module-based app. Work is ordered by decision harm, task completion, reach and then convenience. These are proposed implementation priorities; this planning PR does not claim that the backlog is fixed or that embedded admissions data is accurate.
 
-See [journeys and acceptance criteria](pathways-journeys.md). Source references use functions/selectors in [`index.html`](../index.html) so small layout changes do not invalidate line numbers.
+See [journeys and acceptance criteria](pathways-journeys.md). Source references use functions/selectors in [`Evan - Pathways/index.html`](../Evan%20-%20Pathways/index.html) so small layout changes do not invalidate line numbers.
 
 ## Evidence boundary
 
-- **Browser observation:** the earlier 375 × 812 CSS px inspection showed a crowded Pathways header/tool cluster and small subject controls. This was a limited inspection, not a completed mobile usability study.
-- **Confirmed by source and that inspection:** `header p.subhead`, including the independent-tool notice, is hidden in the mobile media rule. Responsive CSS and a mobile three-tab navigator already exist; Pathways should not be described as wholly lacking mobile support.
-- **Confirmed by source:** compact control rules use heights down to 26–28px; the comparison table has `min-width: 600px` inside `.rp-table-scroll`; school-specific subject assumptions exist; applying a reverse-planning combination overwrites saved subject rows.
+- **Browser observation:** the 28 October 375 × 812 CSS px inspection of the prior single-file version showed a crowded Pathways header/tool cluster and small subject controls. This was a limited inspection, not a completed mobile usability study.
+- **Historical finding from the prior source and that inspection:** `header p.subhead`, including the independent-tool notice, is hidden in the mobile media rule. Responsive CSS and a mobile three-tab navigator already exist; Pathways should not be described as wholly lacking mobile support.
+- **Observed in the prior source; recheck against the module-based app:** compact control rules use heights down to 26–28px; the comparison table has `min-width: 600px` inside `.rp-table-scroll`; school-specific subject assumptions exist; applying a reverse-planning combination overwrites saved subject rows.
 - **To verify:** touch error rate, screen-reader announcements, contrast, zoom, full comparison/keyboard journeys, PDF layout and performance. A CSS finding is a risk indicator, not proof of every browser symptom.
 - Atlas mobile improvement is deferred. Its original files and Koo Tiannuo's credit remain; the first shared entry presents Atlas only as Coming soon.
 
@@ -24,6 +24,8 @@ See [journeys and acceptance criteria](pathways-journeys.md). Source references 
 
 **Acceptance:** Every supported rule in the agreed first-release scope is traceable to a source and reviewed fixture, or explicitly marked unverified/unsupported. Forward results, reverse details, glossary and future exports use consistent terminology and provenance. No verified-accuracy claim precedes that review.
 
+Detailed mode also introduces a provenance risk: the current `render()` can turn an illustrative Pass into an example A1/1/A value. Test and label inferred/example values so exports cannot represent them as actual entered results. This is planned remediation; the placeholder does not change that logic.
+
 ### UX-02: Keep limitations visible on a phone
 
 **Evidence:** Mobile CSS hides `header p.subhead`; explanatory pass/fail limits are separated from the main input/results interaction. Result labels include “Not Eligible” and “Can Apply”.
@@ -35,6 +37,11 @@ See [journeys and acceptance criteria](pathways-journeys.md). Source references 
 ## P1 — Complete the core journeys reliably on mobile
 
 ### UX-03: Rework controls, navigation and comparison for narrow screens
+
+**Refreshed observation, 3 November 2026:** At 320px and 375px in the modular app,
+`.panel-btns`/`#reset` extends the document to 417px. The new availability cards fit
+inside both viewports; the existing control layout needs remediation. Detailed-grade
+and CCA modes make this control-group audit part of the current baseline.
 
 **Evidence:** Limited 375 × 812 observation of crowding/small controls; compact `.seg`, `.fg`, `.reset` rules; mobile state in `setMobTab()`; wide `.rp-compare-table`.
 
@@ -52,7 +59,7 @@ See [journeys and acceptance criteria](pathways-journeys.md). Source references 
 
 ### UX-05: Protect the working plan and explain local saving
 
-**Evidence:** `loadCourseIntoSubjects()` replaces rows and saves immediately; presets/reset replace input; `#save` catches storage failure silently. `loadSaved()` has limited structural checks; compare state is in-memory only.
+**Evidence:** `loadCourseIntoSubjects()` replaces rows and saves immediately; presets/reset replace input; `autoSave()` now writes to both localStorage and IndexedDB but can still show Saved after failures. `loadSaved()` and asynchronous `initApp()` have limited checks; compare state is in-memory only. New detailed grades, CCA and career settings need inclusion in exported plans.
 
 **Work:** Add clear replacement/recovery behaviour, truthful save/error feedback and local-device wording. Define what a saved plan contains; validate restored state before use. Keep anonymous/local saving as the default.
 

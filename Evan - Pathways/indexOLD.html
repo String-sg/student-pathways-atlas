@@ -60,28 +60,6 @@ button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent
 .sr-only, .skip-link:not(:focus) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .skip-link:focus { position: fixed; top: 12px; left: 12px; z-index: 100; background: var(--surface); padding: 12px 18px; border-radius: 10px; }
 
-/* Product availability */
-.product-selector { padding-top: 18px; }
-.product-list {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
-  list-style: none; margin: 0; padding: 0;
-}
-.product-item { min-width: 0; padding: 12px 16px; border: 1px solid var(--rule); border-radius: 12px; }
-.product-item.is-current { background: #132235; border-color: var(--accent); }
-.product-item.is-coming-soon { background: #18202d; color: #cbd5e1; }
-.product-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
-.product-name { font-family: var(--f-display); font-size: 17px; }
-.product-status { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
-.is-current .product-status { background: rgba(56, 189, 248, .14); color: var(--accent-light); }
-.is-coming-soon .product-status { background: #273244; color: #cbd5e1; }
-.product-description { margin: 5px 0 0; color: #cbd5e1; font-size: 13px; }
-.is-coming-soon .product-description { color: #aab7c8; }
-@media (max-width: 640px) {
-  .product-selector { padding-top: 12px; }
-  .product-list { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .product-item { padding: 10px 12px; }
-}
-
 /* School Top Header */
 header {
   padding-block: 22px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto;
@@ -547,12 +525,268 @@ header p.subhead { margin: 6px 0 0; color: #e2e8f0; font-size: 14px; max-width: 
 #mainView[hidden] { display: none !important; }
 body.rp-mode .jump { display: none !important; }
 
+/* 3-Button Mode Toggle [Results | Course | Career] */
+.mode-toggle {
+  display: inline-flex; align-items: center;
+  background: rgba(0, 0, 0, 0.45); border: 1px solid var(--rule);
+  border-radius: 12px; padding: 4px; gap: 4px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4), var(--hi);
+}
+.mode-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 38px; padding: 6px 14px; border-radius: 9px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--muted); font-family: var(--f-display); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none; white-space: nowrap;
+}
+.mode-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+.mode-btn.is-active { font-weight: 800; transform: translateY(-1px); }
+.mode-btn[data-mode="results"].is-active {
+  background: linear-gradient(180deg, #38bdf8, #0284c7); color: #090d16;
+  border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4), var(--hi);
+}
+.mode-btn[data-mode="course"].is-active {
+  background: linear-gradient(180deg, #f59e0b, #d97706); color: #090d16;
+  border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4), var(--hi);
+}
+.mode-btn[data-mode="career"].is-active {
+  background: linear-gradient(180deg, #10b981, #059669); color: #fff;
+  border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4), var(--hi);
+}
+body.course-mode .mob-tabs, body.career-mode .mob-tabs { display: none !important; }
+body.course-mode .jump, body.career-mode .jump { display: none !important; }
+
+/* Visual Career Mind Map & Islands */
+.career-view {
+  animation: tabFadeIn .22s ease-out;
+  margin-bottom: 24px;
+}
+.career-view[hidden] { display: none !important; }
+.career-view-card {
+  background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--rule); border-radius: var(--r);
+  box-shadow: var(--hi), var(--e2); padding: 22px 22px 28px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.career-view-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--rule);
+}
+.career-tag {
+  font-family: var(--f-mono); font-size: 11px; font-weight: 800; color: #34d399;
+  letter-spacing: .08em; text-transform: uppercase; display: inline-block; margin-bottom: 4px;
+}
+.career-header h2 { font-size: clamp(20px, 2.8vw, 26px); font-weight: 800; margin: 0 0 6px; }
+.career-header h2 span { color: #34d399; }
+.career-subhead { color: var(--muted); font-size: 12.5px; margin: 0; line-height: 1.45; max-width: 90ch; }
+
+.career-cluster-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--rule); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+.career-clusters { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.career-cluster-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 8px;
+  border: 1px solid var(--rule); background: rgba(255, 255, 255, 0.05); color: var(--muted);
+  font-family: var(--f-display); font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s;
+}
+.career-cluster-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.career-cluster-btn.is-active {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.28), rgba(5, 150, 105, 0.35));
+  border-color: #34d399; color: #fff; box-shadow: 0 0 12px rgba(16, 185, 129, 0.3), var(--hi);
+}
+
+.career-summary-box {
+  background: rgba(18, 28, 45, 0.55); border: 1px solid var(--rule);
+  border-left: 4px solid #34d399; border-radius: 12px; padding: 12px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.career-summary-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.career-summary-title { font-size: 15px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
+.career-status-pill {
+  display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono);
+  font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+}
+.status-open { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.status-locked { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+.career-map-canvas { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
+.career-stage-row {
+  background: rgba(18, 28, 45, 0.5); border: 1px solid var(--rule); border-radius: 16px;
+  padding: 16px; position: relative; backdrop-filter: blur(16px);
+}
+.career-stage-h {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; gap: 8px;
+}
+.career-stage-h h3 { font-size: 15.5px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
+.career-stage-h span { font-size: 11.5px; color: var(--muted); font-family: var(--f-mono); }
+
+.career-islands-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;
+}
+.career-parallel-wrap {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: stretch;
+}
+@media (max-width: 1024px) {
+  .career-parallel-wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.career-track-panel {
+  background: rgba(255, 255, 255, 0.025); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 14px; display: flex; flex-direction: column; justify-content: flex-start; gap: 12px;
+  transition: all .2s ease;
+}
+.career-track-panel.track-poly {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.05), rgba(18, 28, 45, 0.5));
+}
+.career-track-panel.track-poly .career-track-h {
+  border-bottom-color: rgba(56, 189, 248, 0.25);
+}
+.career-track-panel.track-poly .career-track-h h4 {
+  color: #7dd3fc;
+}
+.career-track-panel.track-poly.is-highest-track {
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.22);
+}
+.career-track-panel.track-jc {
+  border-color: rgba(168, 85, 247, 0.35);
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.05), rgba(18, 28, 45, 0.5));
+}
+.career-track-panel.track-jc .career-track-h {
+  border-bottom-color: rgba(168, 85, 247, 0.25);
+}
+.career-track-panel.track-jc .career-track-h h4 {
+  color: #d8b4fe;
+}
+.career-track-panel.track-jc.is-highest-track {
+  border-color: rgba(168, 85, 247, 0.75);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+.career-track-panel .career-islands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  flex: 1;
+}
+.career-track-h {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+}
+.career-track-h h4 {
+  font-size: 14.5px; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 6px;
+}
+.career-track-sub {
+  font-size: 11px; color: var(--muted); font-family: var(--f-mono);
+}
+.career-island {
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 14px 16px; cursor: pointer; transition: all .18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column; justify-content: space-between; gap: 10px; position: relative;
+  text-align: left;
+}
+.career-island:hover {
+  transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); border-color: var(--accent);
+}
+.career-island.island-open {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(18, 28, 45, 0.7));
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15), var(--hi);
+}
+.career-island.island-locked {
+  opacity: 0.42; filter: grayscale(0.5); border-style: dashed; background: rgba(0, 0, 0, 0.25);
+}
+.career-island.island-locked:hover { opacity: 0.85; filter: none; border-color: var(--bad); }
+
+.island-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.island-title { font-size: 14px; font-weight: 800; color: #fff; line-height: 1.3; }
+.island-inst { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.island-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+.island-badge-time {
+  font-family: var(--f-mono); font-size: 11px; font-weight: 700; color: var(--accent-light);
+  background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.25);
+}
+.island-badge-cumul {
+  font-family: var(--f-mono); font-size: 11px; font-weight: 700; color: #fef08a;
+  background: rgba(245, 158, 11, 0.15); padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.island-badge-paid {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800;
+  padding: 3px 8px; border-radius: 6px; background: rgba(245, 158, 11, 0.2); color: #fef08a;
+  border: 1px solid rgba(245, 158, 11, 0.45); animation: pulseGlow 3s infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.35); }
+}
+.island-status-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  margin-top: 6px; padding-top: 6px; border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+}
+.island-status-foot .open-txt { color: #34d399; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; }
+.island-status-foot .locked-txt { color: #f87171; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.island-stage-divider {
+  display: flex; align-items: center; justify-content: center; gap: 10px; margin: 4px 0;
+  color: var(--muted); font-size: 12px; font-weight: 700;
+}
+.island-stage-divider::before, .island-stage-divider::after {
+  content: ""; height: 1px; flex: 1; background: var(--rule);
+}
+.career-stage-row {
+  scroll-margin-top: 24px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.career-stage-row.is-highest-entry {
+  border-color: rgba(56, 189, 248, 0.65);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.08), rgba(18, 28, 45, 0.7));
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.22), var(--hi);
+}
+.stage-highest-badge {
+  display: inline-flex; align-items: center; gap: 5px; font-family: var(--f-mono);
+  font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+  background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); animation: pulseGlow 2.5s infinite;
+}
+.island-badge-highest {
+  font-family: var(--f-mono); font-size: 10.5px; font-weight: 800; color: #38bdf8;
+  background: rgba(56, 189, 248, 0.18); padding: 2px 7px; border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.35); display: inline-flex; align-items: center; gap: 4px;
+}
+.career-jump-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--rule);
+}
+.career-jump-lbl {
+  font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .06em; margin-right: 2px;
+}
+.career-jump-btn {
+  display: inline-flex; align-items: center; gap: 5px; font-family: var(--f-display);
+  font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--rule);
+  color: var(--ink); cursor: pointer; transition: all .15s;
+}
+.career-jump-btn:hover {
+  background: rgba(255, 255, 255, 0.12); color: #fff; transform: translateY(-1px);
+}
+.career-jump-btn.is-highest {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.25), rgba(2, 132, 199, 0.35));
+  border-color: var(--accent); color: #7dd3fc; font-weight: 800;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
 /* Reverse Planning Styles (Integrated Page-Level View) */
 .rp-view {
   animation: tabFadeIn .22s ease-out;
   margin-bottom: 24px;
 }
-.rp-view[hidden] { display: none !important; }
+.rp-view[hidden] { display: none !important; } backlog-filter: blur(20px);
 .rp-view-card {
   background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--rule); border-radius: var(--r);
@@ -1325,19 +1559,6 @@ footer a { color: var(--accent); font-weight: 700; }
 <a class="skip-link" href="#subjects">Skip to subjects</a>
 
 <div class="wrap">
-  <section class="product-selector" aria-label="Pathway tools">
-    <ul class="product-list">
-      <li class="product-item is-current" aria-current="page">
-        <div class="product-heading"><strong class="product-name">Pathways</strong><span class="product-status">Current tool</span></div>
-        <p class="product-description">Plan subject choices and future pathways.</p>
-      </li>
-      <li class="product-item is-coming-soon">
-        <div class="product-heading"><strong class="product-name">Atlas</strong><span class="product-status">Coming soon</span></div>
-        <p class="product-description">Explore options from exam results.</p>
-      </li>
-    </ul>
-  </section>
-
   <header>
     <div class="hdr-left">
       <img class="school-icon" src="logo.png" alt="Secondary School Logo">
@@ -1352,20 +1573,29 @@ footer a { color: var(--accent); font-weight: 700; }
     </div>
 
     <div class="hdr-right">
+      <div class="mode-toggle" role="tablist" aria-label="Mode Toggle: Results, Course, or Career Planning">
+        <button type="button" role="tab" class="mode-btn is-active" id="btnModeResults" aria-selected="true" data-mode="results">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Results</span>
+        </button>
+        <button type="button" role="tab" class="mode-btn" id="btnModeCourse" aria-selected="false" data-mode="course">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+          <span>Course</span>
+        </button>
+        <button type="button" role="tab" class="mode-btn" id="btnModeCareer" aria-selected="false" data-mode="career">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+          <span>Career</span>
+        </button>
+      </div>
       <div class="hdr-btns">
         <button type="button" class="ov-open" id="ovOpen" aria-haspopup="dialog" aria-controls="ov">Overview Chart</button>
-        <button type="button" class="np-open" id="npOpen" aria-haspopup="dialog" aria-controls="npDlg" title="Nursing &amp; Healthcare Career Ladder">🩺 Nursing Ladder</button>
         <button type="button" class="gl-open" id="glOpen" aria-haspopup="dialog" aria-controls="gl">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6.5A2.5 2.5 0 0 0 4 20.5 2.5 2.5 0 0 0 6.5 23H19v-5"/><path d="M8 7h7M8 11h5"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6.5A2.5 2.5 0 0 0 4 20.5 2.5 2.5 0 0 0 6.5 23H19v-5"/><path d="M8 7h7M8 11h5"/></svg>
           Glossary
         </button>
         <button type="button" class="gl-open" id="creditsOpen" aria-haspopup="dialog" aria-controls="creditsDlg" title="Credits &amp; Acknowledgements">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Credits
-        </button>
-        <button type="button" class="rp-open" id="rpOpen" aria-pressed="false" aria-controls="rpView" title="Toggle Reverse Planning">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
-          <span id="rpBtnText">Reverse Planning</span>
         </button>
       </div>
       <div class="legend" aria-label="Colour key">
@@ -1523,12 +1753,12 @@ footer a { color: var(--accent); font-weight: 700; }
       <div class="rp-view-top">
         <div class="rp-header">
           <span class="rp-tag">🎯 Goal-Oriented Pathway Planner</span>
-          <h2 id="rpTitle">Reverse <span>Planning</span></h2>
+          <h2 id="rpTitle">Course <span>Planning</span></h2>
           <p class="rp-subhead">Start from your dream destination. Tap any course bubble to inspect minimum SEC 2028 entry requirements, compare courses side-by-side, or load the minimum subject combination directly into Subjects &amp; Results.</p>
         </div>
-        <button type="button" class="rp-exit-btn" id="rpExitBtn" title="Back to original app">
+        <button type="button" class="rp-exit-btn" id="rpExitBtn" title="Back to Results Planning">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Back to Main App
+          Back to Results
         </button>
       </div>
 
@@ -1623,11 +1853,107 @@ footer a { color: var(--accent); font-weight: 700; }
       <div class="rp-view-bottom">
         <button type="button" class="rp-exit-btn rp-exit-btn-bottom" id="rpExitBtnBottom">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Back to Subjects &amp; Pathways
+          Back to Results Planning
         </button>
       </div>
     </div>
   </section>
+
+  <!-- Career Planning View (Visual Mind Map of Ladders & Islands) -->
+  <section class="career-view" id="careerView" hidden aria-labelledby="careerTitle">
+    <div class="career-view-card">
+      <div class="career-view-top">
+        <div class="career-header">
+          <span class="career-tag">🚀 Visual Progression Mind Map</span>
+          <h2 id="careerTitle">Career <span>Ladders &amp; Islands</span></h2>
+          <p class="career-subhead">Explore career stages from Secondary 2 to university degrees and industry leadership. Visual islands light up when your current results meet prerequisites, or dim out if not yet eligible. See exact study durations, timeline milestones, and <strong>💰 paid Work-Study Diplomas</strong> where you earn a full salary while sponsored!</p>
+        </div>
+        <button type="button" class="rp-exit-btn" id="careerExitBtn" title="Back to Results Planning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back to Results
+        </button>
+      </div>
+
+      <!-- Career Cluster Selector -->
+      <div class="career-cluster-bar">
+        <div class="career-clusters" id="careerClusters" role="tablist" aria-label="Career Ladders">
+          <button type="button" class="career-cluster-btn is-active" data-cluster="nursing">🩺 Nursing &amp; Healthcare</button>
+          <button type="button" class="career-cluster-btn" data-cluster="aerospace">✈️ Aerospace &amp; Aviation</button>
+          <button type="button" class="career-cluster-btn" data-cluster="robotics">⚡ Robotics &amp; Electrical</button>
+          <button type="button" class="career-cluster-btn" data-cluster="sports">🏃 Sports Science &amp; Fitness</button>
+          <button type="button" class="career-cluster-btn" data-cluster="computing">💻 Computing, AI &amp; Cyber</button>
+        </div>
+      </div>
+
+      <!-- Career Summary & Live Eligibility Indicator -->
+      <div class="career-summary-box" id="careerSummaryBox"></div>
+
+      <!-- Mind Map Canvas with Stages and Islands -->
+      <div class="career-map-canvas" id="careerMapCanvas"></div>
+
+      <div class="rp-view-bottom">
+        <button type="button" class="rp-exit-btn rp-exit-btn-bottom" id="careerExitBtnBottom">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back to Results Planning
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Career Island Details Dialog -->
+  <dialog class="ov" id="islandDlg" aria-labelledby="islDlgTitle" style="max-width:760px;">
+    <div class="ov-inner">
+      <button type="button" class="ov-close" id="islandDlgClose" aria-label="Close">&times;</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+        <span style="font-size:32px;" id="islDlgIcon">🩺</span>
+        <div>
+          <span class="eyebrow" id="islDlgStageBadge">Stage 1: Foundational Practice</span>
+          <h2 id="islDlgTitle" style="text-align:left;margin:4px 0 0;font-size:22px;">Island Title</h2>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;" id="islDlgInst">Institution</div>
+
+      <!-- Live Status Banner in Dialog -->
+      <div id="islDlgStatus" style="margin-bottom:14px;padding:10px 14px;border-radius:10px;font-size:12.5px;font-weight:700;"></div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:16px;">
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Study Duration</div>
+          <div style="font-size:14px;font-weight:800;color:var(--accent);" id="islDlgDuration">3 Years</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Cumulative Years</div>
+          <div style="font-size:14px;font-weight:800;color:var(--gold);" id="islDlgCumulative">3 Years from Sec 4</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.3);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Qualification &amp; Role</div>
+          <div style="font-size:14px;font-weight:800;color:#34d399;" id="islDlgRole">Role</div>
+        </div>
+      </div>
+
+      <!-- Paid & Compensation Section -->
+      <div id="islDlgPaidSec" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;margin-bottom:4px;">💰 Salary, Stipends &amp; Sponsorship</div>
+        <div style="font-size:12.5px;color:#fef08a;line-height:1.5;" id="islDlgCompensation"></div>
+      </div>
+
+      <!-- Curriculum & Attachments -->
+      <div style="margin-bottom:14px;">
+        <h3 style="font-size:13px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">📘 What You Will Learn &amp; Attachments</h3>
+        <p style="font-size:12.5px;color:#cbd5e1;line-height:1.5;margin:0 0 6px;" id="islDlgCurriculum"></p>
+      </div>
+
+      <!-- Full SBB Entry Criteria -->
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--rule);border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:11.5px;font-weight:800;color:var(--accent);text-transform:uppercase;margin-bottom:4px;">🎯 SEC 2028 Minimum Entry Requirements (MER)</div>
+        <div style="font-size:12.5px;color:#e2e8f0;line-height:1.5;" id="islDlgMerText"></div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid var(--rule);">
+        <button type="button" class="rp-action-load" id="islDlgLoadBtn">⚡ Load Required Subjects into Results</button>
+      </div>
+    </div>
+  </dialog>
 
   <footer>
     <p>Adapted for Secondary 2 students based on MOE's official SEC 2028 admissions framework. Eligibility shows whether general admission criteria are met. Specific courses also require course-specific prerequisites and cut-off points.</p>
@@ -2117,19 +2443,38 @@ function evaluate(list){
     if(!hasEl) r.miss.push("English Language taken at G2 or G3");
     if(!hasMath) r.miss.push("Mathematics taken at G2 or G3");
 
-    if(!r.miss.length){
-      const elPass = P23.some(s => s.k === "EL");
-      const mathPass = P23.some(isM);
+    const elPass = P23.some(s => s.k === "EL");
+    const mathPass = P23.some(isM);
 
-      r.state = "ok";
-      r.what = "Gross ELMAB3 of 19 or less (using G2-equivalent grades).";
-      r.req = [
-        "Gross ELMAB3 ≤ 19 (G2 Grades 1–5 / G3 A1–E8 count)",
-        (elPass && mathPass)
-          ? "English & Maths passed: Meets general criteria for most 2-Year courses"
-          : "Course-specific MER applies: Check CourseFinder for specific EL or Maths requirements"
-      ];
-      r.note = "Unlike PFP, 2-Year Higher Nitec accepts G2 Grade 5 / G3 Grade 9 for ELMAB3 computation. Specific subject passes depend on individual course MER.";
+    if(n23 < 3){
+      r.miss.push(`At least 3 passes at G2 or G3 (has ${n23}; ELMAB3 ≤ 19 cannot be achieved with 3 or more failed subjects)`);
+    } else if(!elPass && !mathPass){
+      r.miss.push("Pass in English Language OR Mathematics at G2/G3 (all 2-Year courses require an EL or Math pass)");
+    }
+
+    if(!r.miss.length){
+      if(n23 >= 5 && elPass && mathPass){
+        r.state = "ok";
+        r.what = "Gross ELMAB3 of 19 or less (using G2-equivalent grades).";
+        r.req = [
+          "Gross ELMAB3 ≤ 19 (G2 Grades 1–5 / G3 A1–E8 count)",
+          "English & Maths passed: Meets general criteria for all 2-Year course clusters",
+          "Course Clusters Open: Applied Sciences, Business, Engineering, Info-Comm, and Hospitality"
+        ];
+        r.note = "Direct entry to Year 2 of Higher Nitec. Unlike PFP, 2-Year Higher Nitec accepts G2 Grade 5 / G3 Grade 9 for aggregate computation.";
+      } else {
+        r.state = "amber";
+        r.what = "Conditional eligibility: Gross ELMAB3 of 19 or less needed; limited to courses matching your passed subjects.";
+        r.req = [
+          "Gross ELMAB3 ≤ 19 (achievable with strong passes in your remaining subjects)",
+          (elPass && mathPass)
+            ? "English & Maths passed (4 passes at G2/G3): General course criteria met, contingent on aggregate cut-off"
+            : !elPass
+              ? "English not passed: Limited to Technology & Engineering courses where English pass is not an MER"
+              : "Maths not passed: Limited to Business & Services courses where Maths pass is not an MER"
+        ];
+        r.note = "⚠️ Conditional for 2-Year Higher Nitec: Failing subjects adds 6 points each (G2 Grade 6) to your ELMAB3 aggregate. Course-specific MERs also apply. If ELMAB3 exceeds 19, 3-Year Higher Nitec offers a foundation route.";
+      }
     }
     out.hn2 = r;
   })();
@@ -2694,28 +3039,45 @@ if(tabOk && tabBad){
   }
 });
 
-// Reverse Planning Mode Controller (Replaces Main App)
-let isReverseMode = false;
-function setReverseMode(active){
-  isReverseMode = Boolean(active);
+// 3-Mode Controller: [ Results | Course | Career ]
+let currentAppMode = "results"; // "results" | "course" | "career"
+
+function setAppMode(mode){
+  if(!["results", "course", "career"].includes(mode)) mode = "results";
+  currentAppMode = mode;
+
   const mainView = $("mainView");
   const rpView = $("rpView");
-  const rpBtn = $("rpOpen");
+  const careerView = $("careerView");
 
-  if(mainView) mainView.hidden = isReverseMode;
-  if(rpView) rpView.hidden = !isReverseMode;
+  if(mainView) mainView.hidden = (mode !== "results");
+  if(rpView) rpView.hidden = (mode !== "course");
+  if(careerView) careerView.hidden = (mode !== "career");
 
-  document.body.classList.toggle("rp-mode", isReverseMode);
+  document.body.classList.toggle("results-mode", mode === "results");
+  document.body.classList.toggle("course-mode", mode === "course");
+  document.body.classList.toggle("career-mode", mode === "career");
+  document.body.classList.toggle("rp-mode", mode === "course");
 
-  if(rpBtn){
-    rpBtn.classList.toggle("is-active", isReverseMode);
-    rpBtn.setAttribute("aria-pressed", isReverseMode ? "true" : "false");
-    rpBtn.setAttribute("title", isReverseMode ? "Exit Reverse Planning (Return to Results Planning)" : "Open Reverse Planning");
-    const txt = $("rpBtnText");
-    if(txt) txt.textContent = isReverseMode ? "Results Planning" : "Reverse Planning";
-  }
+  // Update top 3-button toggle buttons
+  const bRes = $("btnModeResults");
+  const bCrs = $("btnModeCourse");
+  const bCar = $("btnModeCareer");
+  if(bRes){ bRes.classList.toggle("is-active", mode === "results"); bRes.setAttribute("aria-selected", mode === "results"); }
+  if(bCrs){ bCrs.classList.toggle("is-active", mode === "course"); bCrs.setAttribute("aria-selected", mode === "course"); }
+  if(bCar){ bCar.classList.toggle("is-active", mode === "career"); bCar.setAttribute("aria-selected", mode === "career"); }
 
-  if(isReverseMode){
+  if(mode === "career"){
+    renderCareerLadders();
+    const activeSubs = rows.filter(r => r.taken !== false && r.lv != null && r.pass != null);
+    const evalResult = evaluate(activeSubs);
+    const highest = getHighestEligibleStartingStage(evalResult);
+    if(highest){
+      scrollToHighestEligibleStage(highest);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  } else if(mode === "course"){
     renderBubbles(currentFilter);
     window.scrollTo({ top: 0, behavior: "smooth" });
   } else {
@@ -2723,16 +3085,20 @@ function setReverseMode(active){
   }
 }
 
-const rpOpenBtn = $("rpOpen");
-if(rpOpenBtn){
-  rpOpenBtn.addEventListener("click", () => {
-    setReverseMode(!isReverseMode);
-  });
+function setReverseMode(active){
+  setAppMode(active ? "course" : "results");
 }
 
-["rpExitBtn", "rpExitBtnBottom"].forEach(id => {
+const btnModeResults = $("btnModeResults");
+const btnModeCourse = $("btnModeCourse");
+const btnModeCareer = $("btnModeCareer");
+if(btnModeResults) btnModeResults.addEventListener("click", () => setAppMode("results"));
+if(btnModeCourse) btnModeCourse.addEventListener("click", () => setAppMode("course"));
+if(btnModeCareer) btnModeCareer.addEventListener("click", () => setAppMode("career"));
+
+["rpExitBtn", "rpExitBtnBottom", "careerExitBtn", "careerExitBtnBottom"].forEach(id => {
   const b = $(id);
-  if(b) b.addEventListener("click", () => setReverseMode(false));
+  if(b) b.addEventListener("click", () => setAppMode("results"));
 });
 
 // Save and Reset
@@ -3484,6 +3850,32 @@ const COURSES_DATA = {
       { k: "DT", lv: null, pass: null, el: 3, taken: false }
     ]
   },
+  "pfp_health": {
+    id: "pfp_health",
+    name: "PFP: Healthcare & Nursing",
+    category: "Polytechnic Foundation (PFP)",
+    macroId: "pfp",
+    icon: "🩺",
+    metric: "Gross ELMAB3 ≤ 12",
+    minBand: "5 G2 subjects (Grades 1–4 only)",
+    elReq: "G2 Grade 1–3 (or G3 pass)",
+    mathReq: "G2 Grade 1–3 (or G3 pass)",
+    sciReq: "G2 Combined Science / NFS Grade 1–3",
+    minGrades: "• English: G2 Grade 1–3\n• Mathematics: G2 Grade 1–3\n• 1 Relevant Science or NFS: G2 Grade 1–3\n• 2 other Best subjects: G2 Grade 1–4 (Grade 5/6 not accepted)\n• Gross ELMAB3 ≤ 12 (excluding CCA points)",
+    campuses: "Nanyang Poly (NYP) & Ngee Ann Poly (NP) via PFP Healthcare Group 1 route.",
+    desc: "1-year polytechnic foundation programme preparing G2 students for direct advancement into the Diploma in Nursing (NYP/NP) without sitting for Sec 5.",
+    combiSummary: "Minimum 5 G2 subjects: EL (G2), Math (G2), MTL (G2), Science (G2), Hum (G2)",
+    recommendedCombi: [
+      { k: "EL", lv: 2, pass: true },
+      { k: "MATH", lv: 2, pass: true },
+      { k: "MTL", lv: 2, pass: true },
+      { k: "SCI", lv: 2, pass: true, sci: true },
+      { k: "HUM", lv: 2, pass: true },
+      { k: "NFS", lv: null, pass: null, el: 1, taken: false },
+      { k: "ART", lv: null, pass: null, el: 2, taken: false },
+      { k: "DT", lv: null, pass: null, el: 3, taken: false }
+    ]
+  },
 
   /* Arts Institutions */
   "arts_nfp": {
@@ -3852,7 +4244,7 @@ const MACRO_BUBBLES = [
     name: "Polytechnic Foundation Programme (PFP)",
     icon: "🚀",
     badge: "1-Year Foundation into Poly",
-    courses: ["pfp_stem", "pfp_biz", "pfp_sport"]
+    courses: ["pfp_stem", "pfp_biz", "pfp_sport", "pfp_health"]
   },
   {
     id: "arts",
@@ -4294,6 +4686,1262 @@ if(npInspectPolyBtn){
   });
 }
 
+/* Career Ladders Visual Progression Engine */
+const CAREER_LADDERS = {
+  computing: {
+    id: "computing",
+    title: "Computing, AI & Cybersecurity Career Ladder",
+    icon: "💻",
+    summary: "Explore complete post-secondary pathways into tech leadership — from ITE systems training, PFP, and Polytechnic Year 1 diplomas to direct Junior College A-Levels leading to premier university Computer Science degrees and CTO roles!",
+    stages: [
+      {
+        stageNum: 1,
+        stageId: "stage-ite",
+        stageTitle: "Stage 1: IT & Systems Foundation",
+        stageSubtitle: "Secondary School & ITE Certification (G1/G2/G3)",
+        islands: [
+          {
+            id: "isl_ite_cyber",
+            title: "ITE Higher Nitec in Cyber & Network Security / IT",
+            institution: "ITE College Central / East / West (School of Info-Comm Tech)",
+            role: "Junior Systems & Network Administrator",
+            durationYears: "2 to 3 Years",
+            cumulativeYears: "2 to 3 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "3-Yr: Math or Sci/Comp passed (G1/G2/G3) | 2-Yr: ELMAB3 ≤ 19",
+            recommendedCombiKey: "ite_hn2_cyber",
+            overview: "Network configuration (Cisco), Linux/Windows server administration, cybersecurity defense tools, firewall management, and technical troubleshooting.",
+            curriculum: "Network Fundamentals, Server Virtualization, Cybersecurity Essentials, Python Scripting, Ethical Hacking Basics, 24-week attachment.",
+            compensation: "Industry training allowances (S$700–S$1,000/mo) with vendor certifications (CompTIA, Cisco CCNA)."
+          }
+        ]
+      },
+      {
+        stageNum: 2,
+        stageId: "stage-pfp",
+        stageTitle: "Stage 2: Polytechnic Foundation Programme (PFP)",
+        stageSubtitle: "1-Year Poly Foundation replacing Sec 5 for G2 Students",
+        islands: [
+          {
+            id: "isl_pfp_comp",
+            title: "PFP: Technology & Computing Foundation",
+            institution: "All 5 Polytechnics (SP, NP, NYP, TP, RP)",
+            role: "Poly Foundation Student → Direct Poly Diploma Year 1",
+            durationYears: "1 Year Foundation + 3 Years Poly",
+            cumulativeYears: "4 Years to Diploma",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.pfp.state !== "bad",
+            merText: "5 G2 subjects Grade 1–4 (EL & Math Grade 1–3, ELMAB3 ≤ 12)",
+            recommendedCombiKey: "pfp_stem",
+            overview: "Direct foundation year at polytechnic replacing Sec 5! Covers foundational programming, applied mathematics, physics, and design thinking with guaranteed direct entry to poly diplomas.",
+            curriculum: "Foundations of Coding (Python), Engineering Math, Digital Logic, Cyber Ethics, Poly Academic Preparation.",
+            compensation: "Eligible for CDC/PFP training bursaries and polytechnic foundation study grants."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-poly",
+        stageTitle: "Stage 3: Professional Computing Diplomas",
+        stageSubtitle: "Polytechnic Full-Time Direct vs. 💰 Paid Work-Study",
+        islands: [
+          {
+            id: "isl_poly_comp_direct",
+            title: "Polytechnic Diploma in Applied AI / Cybersecurity / IT",
+            institution: "SP / NP / NYP / TP / RP (3-Year Diploma)",
+            role: "Software Developer / Cybersecurity Analyst / AI Engineer",
+            durationYears: "3 Years",
+            cumulativeYears: "3 Years (Direct from SEC)",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.poly.state !== "bad",
+            merText: "4 G3 + 1 G2 pass (Net ELR2B2-C ≤ 22; Math & Science/Comp passed)",
+            recommendedCombiKey: "poly_comp",
+            overview: "Full-stack software engineering, deep learning algorithms, cloud architecture (AWS/Azure), penetration testing, and digital forensics. Direct entry with 4 G3 + 1 G2!",
+            curriculum: "Data Structures & Algorithms, Machine Learning, Cloud DevOps, Full-Stack Web Development, Secure Software Development, Capstone Project.",
+            compensation: "Smart Nation scholarships and tech company sponsorships offer full tuition waivers + S$1,000/mo stipend."
+          },
+          {
+            id: "isl_wsd_cyber",
+            title: "ITE Work-Study Diploma in Cyber Security & Operations",
+            institution: "ITE in Partnership with GovTech, CSIT & Tech Enterprises",
+            role: "Security Operations Centre (SOC) Analyst",
+            durationYears: "2.5 Years",
+            cumulativeYears: "4.5 to 5.5 Years",
+            isPaid: true,
+            payHighlight: "💰 Earn S$2,200 – S$3,000/month salary + 100% company tuition sponsorship!",
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "Higher Nitec in IT / Cybersecurity with aptitude interview",
+            recommendedCombiKey: "ite_hn2_cyber",
+            overview: "Work inside a real 24/7 Security Operations Centre (SOC) defending Singapore's cyber infrastructure while earning full monthly salary and a completely free diploma!",
+            curriculum: "Threat Hunting & Incident Response, SIEM Configuration, Cloud Security Architecture, Malware Analysis, Certified Ethical Hacker (CEH) prep.",
+            compensation: "Monthly salary (S$2,200 to S$3,000/mo), CPF, shift allowances, guaranteed career progression, and zero tuition debt."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-jc",
+        stageTitle: "Stage 3: Junior College & Pre-University Route",
+        stageSubtitle: "GCE A-Levels Academic Pre-U Track (2 Years in JC / 3 Years in MI)",
+        islands: [
+          {
+            id: "isl_jc_comp",
+            title: "Junior College: JC Science & Computing Stream (H2 Computing & Math)",
+            institution: "Junior Colleges offering H2 Computing (e.g. YIJC, JPJC, ASRJC, DHS, HCI, NJC)",
+            role: "Pre-University A-Level Student (Direct fast-track to B.Comp Computer Science)",
+            durationYears: "2 Years",
+            cumulativeYears: "2 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.mi.state !== "bad",
+            merText: "5 G3 subjects (Gross L1R4 ≤ 16 for JC / ≤ 20 for MI; G3 EL C6, Math D7)",
+            recommendedCombiKey: "jc_sci",
+            overview: "Pre-university academic preparation offering H2 Computing (Python programming, object-oriented design, database architecture, network protocols) alongside H2 Mathematics and H2 Physics. Prepares directly for university Computer Science degrees without polytechnic detours!",
+            curriculum: "GCE A-Levels: H2 Computing, H2 Mathematics, H2 Physics / Further Mathematics, General Paper, Project Work.",
+            compensation: "MOE Pre-University Scholarships and Edusave awards available for top performers."
+          }
+        ]
+      },
+      {
+        stageNum: 4,
+        stageId: "stage-uni",
+        stageTitle: "Stage 4: University Computer Science Degree",
+        stageSubtitle: "Bachelor of Computing (B.Comp) in CS / AI / Cybersecurity",
+        islands: [
+          {
+            id: "isl_uni_comp",
+            title: "University B.Comp in Computer Science / Artificial Intelligence",
+            institution: "NUS (School of Computing) / NTU / SMU / SUTD / SIT",
+            role: "Senior Software Engineer / AI Research Scientist",
+            durationYears: "3 to 4 Years",
+            cumulativeYears: "5 to 7 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.poly.state !== "bad" || evalResult.out.pfp.state !== "bad" || evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "GCE A-Levels (from JC) OR Polytechnic Diploma in Computing / IT",
+            recommendedCombiKey: "jc_sci",
+            overview: "Advanced algorithms, computer vision, large language models (LLM), distributed cloud systems, and cryptographic protocols. Direct entry from either JC A-Levels or Poly Diploma!",
+            curriculum: "Distributed Systems, Operating Systems Kernel Design, Deep Learning Architectures, Applied Cryptography, Software Product Management, Honors Thesis.",
+            compensation: "Top starting salaries in Singapore (averaging S$5,500 to S$7,500/month) with international tech firms."
+          }
+        ]
+      },
+      {
+        stageNum: 5,
+        stageId: "stage-career",
+        stageTitle: "Stage 5: Tech Leadership & Chief Technology Officer",
+        stageSubtitle: "Chief Information Security Officer (CISO) / Head of AI / Tech Founder",
+        islands: [
+          {
+            id: "isl_career_comp_lead",
+            title: "Chief Technology Officer (CTO) / Chief Information Security Officer (CISO)",
+            institution: "Global Tech Companies, Fintech Unicorns, Government Agencies (GovTech/DSTA)",
+            role: "Chief Technology Officer (CTO) / CISO / Principal AI Architect",
+            durationYears: "Ongoing",
+            cumulativeYears: "8+ Years",
+            isPaid: true,
+            payHighlight: "💰 S$12,000 – S$25,000+/month executive technology salary",
+            merCheck: (evalResult) => true,
+            merText: "B.Comp / M.Sc + Proven track record of high-impact engineering leadership",
+            recommendedCombiKey: "jc_sci",
+            overview: "Architects national-scale digital infrastructure, leads engineering teams of hundreds of developers, and sets artificial intelligence governance for Singapore and global enterprises.",
+            curriculum: "Enterprise System Architecture, Corporate Governance, Strategic AI Investment, Board Advisory.",
+            compensation: "Executive compensation ($12,000 to $25,000+/month) plus equity stock grants."
+          }
+        ]
+      }
+    ]
+  },
+
+  nursing: {
+    id: "nursing",
+    title: "Nursing & Healthcare Career Ladder",
+    icon: "🩺",
+    summary: "Structured progression from Enrolled Nurse (ITE) to Registered Nurse (Polytechnic / Work-Study Diploma), Junior College fast-track, and University Nursing Degrees. Under Full SBB, no student is locked out of nursing!",
+    stages: [
+      {
+        stageNum: 1,
+        stageId: "stage-ite",
+        stageTitle: "Stage 1: Foundational Practice",
+        stageSubtitle: "Secondary School & ITE Certification (G1/G2/G3)",
+        islands: [
+          {
+            id: "isl_ite_nursing",
+            title: "ITE 3-Yr Higher Nitec in Nursing",
+            institution: "ITE College East (School of Health Sciences)",
+            role: "Enrolled Nurse (EN)",
+            durationYears: "3 Years",
+            cumulativeYears: "3 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad",
+            merText: "Min 4 subjects offered at G1/G2/G3 with English & Math passed (R1B3-C)",
+            recommendedCombiKey: "ite_hn_nursing",
+            overview: "Foundational healthcare modules, high-tech simulation wards, anatomy, and supervised patient care in public hospitals.",
+            curriculum: "Anatomy & Physiology, Basic Nursing Procedures, Infection Control, Medical-Surgical Nursing, and 39 weeks of hospital rotations.",
+            compensation: "Public healthcare clusters offer training bursaries ($500–$800/mo) and sign-on incentives for ITE nursing students."
+          }
+        ]
+      },
+      {
+        stageNum: 2,
+        stageId: "stage-pfp",
+        stageTitle: "Stage 2: Polytechnic Foundation Programme (PFP)",
+        stageSubtitle: "1-Year Poly Foundation replacing Sec 5 for G2 Students",
+        islands: [
+          {
+            id: "isl_pfp_nursing",
+            title: "PFP: Healthcare & Nursing Foundation",
+            institution: "Nanyang Poly (NYP) & Ngee Ann Poly (NP)",
+            role: "Poly Foundation Student → Direct Entry into Diploma in Nursing",
+            durationYears: "1 Year Foundation + 3 Years Poly",
+            cumulativeYears: "4 Years to Registered Nurse",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.pfp.state !== "bad",
+            merText: "5 G2 subjects Grade 1–4 (EL & Math Grade 1–3, ELMAB3 ≤ 12)",
+            recommendedCombiKey: "pfp_health",
+            overview: "Skip Sec 5 and enter polytechnic 1 year early! Focuses on healthcare biology, clinical communication, and science foundations to prepare for the Diploma in Nursing.",
+            curriculum: "Bioscience Fundamentals, Health Communication, Quantitative Skills, Healthcare Ethics, Simulation Prep.",
+            compensation: "Eligible for MOH Holdings healthcare study grants and cluster sponsorship packages."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-poly",
+        stageTitle: "Stage 3: Professional Nursing Diplomas",
+        stageSubtitle: "Polytechnic Full-Time vs. 💰 Paid Work-Study",
+        islands: [
+          {
+            id: "isl_poly_nursing_direct",
+            title: "Polytechnic Diploma in Nursing (Direct Entry)",
+            institution: "Nanyang Poly (NYP) / Ngee Ann Poly (NP)",
+            role: "Registered Nurse (RN)",
+            durationYears: "3 Years",
+            cumulativeYears: "3 Years (Direct from SEC)",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.poly.state !== "bad",
+            merText: "4 G3 + 1 G2 pass (Net ELR2B2-C ≤ 24; English, Math & Science passed)",
+            recommendedCombiKey: "poly_nursing",
+            overview: "Direct entry from Secondary School with preferential net cut-off of 24. Prepares students for immediate registration as Registered Nurses (RN).",
+            curriculum: "Pathophysiology, Advanced Pharmacology, Acute Care, Paediatric & Geriatric Nursing, 32+ weeks hospital rotations.",
+            compensation: "MOH Holdings Healthcare Scholarships provide 100% tuition sponsorship + S$900–S$1,000 monthly living allowance."
+          },
+          {
+            id: "isl_wsd_nursing",
+            title: "ITE Work-Study Diploma (WSDip) in Nursing",
+            institution: "ITE with SingHealth, NHG & NUHS Hospital Clusters",
+            role: "Registered Nurse (RN)",
+            durationYears: "3 Years",
+            cumulativeYears: "6 Years (ITE + Work-Study)",
+            isPaid: true,
+            payHighlight: "💰 Earn S$2,000 – S$2,600/month full salary + 100% course sponsorship by hospital!",
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad",
+            merText: "Higher Nitec in Nursing (Enrolled Nurse) with hospital sponsorship",
+            recommendedCombiKey: "ite_hn_nursing",
+            overview: "Outstanding earn-as-you-learn pathway! Work as an Enrolled Nurse earning full monthly salary while your hospital sponsors 100% of your diploma tuition fees.",
+            curriculum: "On-the-job clinical coaching (70%) combined with block-release classroom and simulation training (30%) at ITE and hospitals.",
+            compensation: "Regular full-time salary ($2,000 to $2,600/mo) plus CPF, hospital bonuses, medical benefits, and zero tuition debt."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-jc",
+        stageTitle: "Stage 3: Junior College & Pre-University Route",
+        stageSubtitle: "GCE A-Levels Academic Pre-U Track (2 Years in JC / 3 Years in MI)",
+        islands: [
+          {
+            id: "isl_jc_nursing",
+            title: "Junior College: Pre-U Science Stream (H2 Biology & Chemistry)",
+            institution: "All Junior Colleges islandwide",
+            role: "Pre-University A-Level Student (Direct fast-track to NUS/SIT BSc Nursing or Medicine)",
+            durationYears: "2 Years",
+            cumulativeYears: "2 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.mi.state !== "bad",
+            merText: "5 G3 subjects (Gross L1R4 ≤ 16 for JC / ≤ 20 for MI; G3 EL C6, Math D7)",
+            recommendedCombiKey: "jc_sci",
+            overview: "2-year A-Level academic preparation in H2 Biology and H2 Chemistry. Qualifies directly for the Bachelor of Science in Nursing at NUS, SIT, or direct university healthcare/medical courses without diploma detours.",
+            curriculum: "GCE A-Levels: H2 Biology, H2 Chemistry, H2 Mathematics, General Paper, Project Work.",
+            compensation: "MOH Holdings Pre-University Healthcare Scholarships offer full funding and early clinical attachments."
+          }
+        ]
+      },
+      {
+        stageNum: 4,
+        stageId: "stage-uni",
+        stageTitle: "Stage 4: University Nursing Degree",
+        stageSubtitle: "Bachelor of Science in Nursing (Honours)",
+        islands: [
+          {
+            id: "isl_uni_nursing",
+            title: "University Bachelor of Science in Nursing",
+            institution: "National University of Singapore (NUS Alice Lee Centre) / SIT",
+            role: "Staff Nurse / Senior Staff Nurse (BSc Nursing)",
+            durationYears: "2 to 3 Years",
+            cumulativeYears: "5 to 6 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.poly.state !== "bad" || evalResult.out.pfp.state !== "bad" || evalResult.out.hn3.state !== "bad",
+            merText: "GCE A-Levels (from JC) OR Polytechnic Diploma / Work-Study Diploma in Nursing",
+            recommendedCombiKey: "poly_nursing",
+            overview: "Advanced clinical reasoning, healthcare leadership, translational research, and specialized clinical electives. Diploma graduates receive accelerated exemptions!",
+            curriculum: "Health Informatics, Nursing Research & Biostatistics, Complex Clinical Management, Palliative Care, Capstone Project.",
+            compensation: "Hospital sponsorship packages offer full tuition payment + S$2,500–S$3,200 monthly study grant for in-service diploma nurses."
+          }
+        ]
+      },
+      {
+        stageNum: 5,
+        stageId: "stage-career",
+        stageTitle: "Stage 5: Senior Clinical Leadership & Specialisation",
+        stageSubtitle: "Senior Practice & Master's Qualification",
+        islands: [
+          {
+            id: "isl_career_nursing_lead",
+            title: "Advanced Practice Nurse (APN) / Nurse Clinician",
+            institution: "Public Healthcare Clusters & MOH",
+            role: "Advanced Practice Nurse (APN) / Nurse Director",
+            durationYears: "Ongoing",
+            cumulativeYears: "8+ Years",
+            isPaid: true,
+            payHighlight: "💰 S$6,000 – S$12,000+/month senior clinical specialist salary",
+            merCheck: (evalResult) => true,
+            merText: "BSc Nursing + Master of Nursing & Board Certification",
+            recommendedCombiKey: "poly_nursing",
+            overview: "APNs hold clinical prescribing authority, run specialized outpatient clinics, lead hospital ward operations, and mentor clinical teams.",
+            curriculum: "Master of Nursing, Advanced Health Assessment, Pharmacology Prescribing, Clinical Decision Making, Executive Healthcare Leadership.",
+            compensation: "Senior healthcare professional salary scale ($6,000 to $12,000+/month) with retention bonuses."
+          }
+        ]
+      }
+    ]
+  },
+
+  aerospace: {
+    id: "aerospace",
+    title: "Aerospace & Aviation Engineering Ladder",
+    icon: "✈️",
+    summary: "From aircraft technician (ITE) to Licensed Aircraft Engineer (LAE), Junior College physical science routes, and University Aeronautical Engineer. Singapore is Asia's aerospace hub with world-class MRO facilities.",
+    stages: [
+      {
+        stageNum: 1,
+        stageId: "stage-ite",
+        stageTitle: "Stage 1: Technical Foundation",
+        stageSubtitle: "Secondary School & ITE Certification (G1/G2/G3)",
+        islands: [
+          {
+            id: "isl_ite_aero",
+            title: "ITE Higher Nitec in Aerospace Technology / Avionics",
+            institution: "ITE College Central (School of Engineering)",
+            role: "Junior Aircraft Technician",
+            durationYears: "2 to 3 Years",
+            cumulativeYears: "2 to 3 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "3-Yr: Min 4 subjects at G1 (R1B3-A Math pass) | 2-Yr: ELMAB3 ≤ 19 at G2",
+            recommendedCombiKey: "ite_hn3_eng",
+            overview: "Hands-on aircraft maintenance on real aircraft in ITE's aerospace hangar. Learn aircraft structural repair, propulsion systems, and digital avionics.",
+            curriculum: "Aviation Legislation, Aerodynamics, Aircraft Materials & Hardware, Gas Turbine Engine Maintenance, Electrical Fundamentals.",
+            compensation: "Apprenticeship allowances (S$600–S$1,000/mo) available through CAAS-approved maintenance organizations."
+          }
+        ]
+      },
+      {
+        stageNum: 2,
+        stageId: "stage-pfp",
+        stageTitle: "Stage 2: Polytechnic Foundation Programme (PFP)",
+        stageSubtitle: "1-Year Poly Foundation replacing Sec 5 for G2 Students",
+        islands: [
+          {
+            id: "isl_pfp_aero",
+            title: "PFP: Engineering & Aerospace Technology",
+            institution: "SP / NP / TP / RP",
+            role: "Poly Foundation Student → Direct Entry into Diploma in Aerospace",
+            durationYears: "1 Year Foundation + 3 Years Poly",
+            cumulativeYears: "4 Years to Diploma",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.pfp.state !== "bad",
+            merText: "5 G2 subjects Grade 1–4 (EL, Math & Science Grade 1–3, ELMAB3 ≤ 12)",
+            recommendedCombiKey: "pfp_stem",
+            overview: "Fast-track polytechnic foundation for G2 students with strong maths and science aptitude. Skip Sec 5 and enter polytechnic 1 year early to prepare for Aerospace Engineering diplomas!",
+            curriculum: "Applied Mechanics, Aerodynamic Principles, Digital Fabrication, Engineering Mathematics, Poly Academic Prep.",
+            compensation: "Eligible for aviation industry pre-diploma study grants."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-poly",
+        stageTitle: "Stage 3: Applied Aerospace Diplomas",
+        stageSubtitle: "Polytechnic Full-Time vs. 💰 Paid Work-Study",
+        islands: [
+          {
+            id: "isl_poly_aero_direct",
+            title: "Polytechnic Diploma in Aerospace Engineering",
+            institution: "SP / NP / TP / NYP / RP",
+            role: "Aerospace Engineer Trainee / Quality Specialist",
+            durationYears: "3 Years",
+            cumulativeYears: "3 Years (Direct from SEC)",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.poly.state !== "bad",
+            merText: "4 G3 + 1 G2 pass (Net ELR2B2-C ≤ 22; Math & Science/D&T passed)",
+            recommendedCombiKey: "poly_eng",
+            overview: "CAAS SAR-66 accredited aerospace curriculum. Covers advanced flight mechanics, avionics simulation, and composite aircraft manufacturing.",
+            curriculum: "Aircraft Propulsion, Aerodynamics & Flight Mechanics, Digital Electronics, Unmanned Aerial Systems (UAS), Inspection & NDT.",
+            compensation: "SIAEC and ST Engineering scholarships cover 100% course fees with guaranteed employment upon graduation."
+          },
+          {
+            id: "isl_wsd_aero",
+            title: "ITE Work-Study Diploma in Aircraft Maintenance",
+            institution: "ITE with SIA Engineering Company & ST Engineering",
+            role: "Aircraft Maintenance Specialist / Trainee LAE",
+            durationYears: "2.5 Years",
+            cumulativeYears: "4.5 to 5.5 Years",
+            isPaid: true,
+            payHighlight: "💰 Earn S$2,100 – S$2,800/month salary + 100% employer course sponsorship!",
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "Higher Nitec in Aerospace / Mechanical / Electrical with interview",
+            recommendedCombiKey: "ite_hn2_eng",
+            overview: "Work right inside aircraft hangars at Changi Airport! Earn full salary with SIAEC or ST Engineering while completing SAR-66 basic license modules.",
+            curriculum: "Airframe Systems, Jet Engine Overhaul, Line & Base Maintenance, Human Factors in Aviation, CAAS Basic Licensing prep.",
+            compensation: "Monthly salary (S$2,100 to S$2,800/mo), CPF, shift allowances, flight pass privileges, and full company tuition payment."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-jc",
+        stageTitle: "Stage 3: Junior College & Pre-University Route",
+        stageSubtitle: "GCE A-Levels Academic Pre-U Track (2 Years in JC / 3 Years in MI)",
+        islands: [
+          {
+            id: "isl_jc_aero",
+            title: "Junior College: Pre-U Physical Sciences Stream (H2 Physics & Math)",
+            institution: "All Junior Colleges islandwide",
+            role: "Pre-University A-Level Student (Direct pathway to University B.Eng Aerospace)",
+            durationYears: "2 Years",
+            cumulativeYears: "2 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.mi.state !== "bad",
+            merText: "5 G3 subjects (Gross L1R4 ≤ 16 for JC / ≤ 20 for MI; G3 EL C6, Math D7)",
+            recommendedCombiKey: "jc_sci",
+            overview: "2-year rigorous A-Level academic preparation in H2 Physics, H2 Mathematics, and Chemistry. Prepares for direct entry into NTU Aerospace Engineering or NUS Mechanical Engineering (Aeronautical) without diploma detours!",
+            curriculum: "GCE A-Levels: H2 Physics (Fluid Mechanics, Thermodynamics, Kinematics), H2 Mathematics, H2 Chemistry, General Paper, Project Work.",
+            compensation: "DSTA and RSAF Pre-University Scholarships offer full tuition sponsorship and allowances."
+          }
+        ]
+      },
+      {
+        stageNum: 4,
+        stageId: "stage-uni",
+        stageTitle: "Stage 4: Aeronautical Engineering Degree",
+        stageSubtitle: "Bachelor of Engineering (B.Eng) in Aerospace / Mechanical",
+        islands: [
+          {
+            id: "isl_uni_aero",
+            title: "University B.Eng in Aerospace Engineering",
+            institution: "Nanyang Technological University (NTU) / SIT-University of Glasgow",
+            role: "Aeronautical Design Engineer / Fleet Systems Lead",
+            durationYears: "3 to 4 Years",
+            cumulativeYears: "5 to 7 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.poly.state !== "bad" || evalResult.out.pfp.state !== "bad" || evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "GCE A-Levels (from JC) OR Polytechnic Diploma in Aerospace / Mechanical Engineering",
+            recommendedCombiKey: "jc_sci",
+            overview: "Advanced computational fluid dynamics (CFD), hypersonic propulsion, space launch systems, and autonomous aerial robotics. Open to both JC A-Level and Poly diploma graduates!",
+            curriculum: "Advanced Fluid Mechanics, Orbital Mechanics, Aircraft Structural Dynamics, Gas Dynamics, Avionics Architecture, Flight Design Project.",
+            compensation: "DSTA, RSAF, and aerospace corporate scholarships offer full funding and high-paying starting salaries (S$4,500–S$5,500/mo)."
+          }
+        ]
+      },
+      {
+        stageNum: 5,
+        stageId: "stage-career",
+        stageTitle: "Stage 5: Industry Leadership",
+        stageSubtitle: "Licensed Aircraft Engineer (LAE) & Chief Engineer",
+        islands: [
+          {
+            id: "isl_career_lae",
+            title: "CAAS Licensed Aircraft Engineer (LAE) / Chief Engineer",
+            institution: "Commercial Airlines, Aerospace MRO & Defense",
+            role: "Licensed Aircraft Engineer (LAE Cat B1/B2) / Chief Technical Officer",
+            durationYears: "Ongoing",
+            cumulativeYears: "8+ Years",
+            isPaid: true,
+            payHighlight: "💰 S$6,500 – S$14,000+/month high-responsibility salary",
+            merCheck: (evalResult) => true,
+            merText: "CAAS SAR-66 License + Type Rating Certification",
+            recommendedCombiKey: "jc_sci",
+            overview: "Sole authority to sign off aircraft airworthiness certificates for commercial flights (e.g. Boeing 787, Airbus A350). Holds absolute responsibility for passenger flight safety.",
+            curriculum: "Aircraft Type Ratings, Airworthiness Regulatory Sign-off, Safety Management Systems (SMS), Quality Assurance Auditing.",
+            compensation: "Top engineering remuneration ($6,500 to $14,000+/month) with international career mobility across global aviation hubs."
+          }
+        ]
+      }
+    ]
+  },
+
+  robotics: {
+    id: "robotics",
+    title: "Robotics, Electrical & Smart Systems Ladder",
+    icon: "⚡",
+    summary: "From robotics technician (ITE) to automation technologist (Poly/Work-Study), Junior College computing routes, and AI robotics engineer. Powering smart ports, semiconductor foundries, and automated factories.",
+    stages: [
+      {
+        stageNum: 1,
+        stageId: "stage-ite",
+        stageTitle: "Stage 1: Applied Technical Skills",
+        stageSubtitle: "Secondary School & ITE Certification (G1/G2/G3)",
+        islands: [
+          {
+            id: "isl_ite_robotics",
+            title: "ITE Higher Nitec in Robotics & Mechatronics / Electrical",
+            institution: "ITE College Central / East / West",
+            role: "Automation & Robotics Technician",
+            durationYears: "2 to 3 Years",
+            cumulativeYears: "2 to 3 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "3-Yr: Min 4 subjects at G1 (R1B3-A Math pass) | 2-Yr: ELMAB3 ≤ 19",
+            recommendedCombiKey: "ite_hn2_eng",
+            overview: "Programmable logic controllers (PLC), pneumatic actuators, robotic arm calibration, and electrical circuit diagnostics.",
+            curriculum: "Microcontroller Programming, Industrial Sensors, Electro-Pneumatics, 3D CAD Modeling, Industrial Robot Integration.",
+            compensation: "Industry training allowances (S$600–S$900/mo) with guaranteed polytechnic progression eligibility."
+          }
+        ]
+      },
+      {
+        stageNum: 2,
+        stageId: "stage-pfp",
+        stageTitle: "Stage 2: Polytechnic Foundation Programme (PFP)",
+        stageSubtitle: "1-Year Poly Foundation replacing Sec 5 for G2 Students",
+        islands: [
+          {
+            id: "isl_pfp_robotics",
+            title: "PFP: Engineering & Smart Systems",
+            institution: "SP / NP / NYP / TP / RP",
+            role: "Poly Foundation Student → Direct Entry into Robotics Diploma",
+            durationYears: "1 Year Foundation + 3 Years Poly",
+            cumulativeYears: "4 Years to Diploma",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.pfp.state !== "bad",
+            merText: "5 G2 subjects Grade 1–4 (EL, Math & Science/D&T Grade 1–3, ELMAB3 ≤ 12)",
+            recommendedCombiKey: "pfp_stem",
+            overview: "Hands-on polytechnic foundation for G2 students leading straight into diplomas in Robotics & Mechatronics without sitting for Sec 5 examinations!",
+            curriculum: "Principles of Automation, Circuit Fundamentals, Computer Aided Design, Applied Mathematics, Project Prototyping.",
+            compensation: "Eligible for engineering bursaries and poly study awards."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-poly",
+        stageTitle: "Stage 3: Advanced Engineering Diplomas",
+        stageSubtitle: "Polytechnic Full-Time vs. 💰 Paid Work-Study",
+        islands: [
+          {
+            id: "isl_poly_robotics_direct",
+            title: "Polytechnic Diploma in Robotics & Automation / Electrical",
+            institution: "SP / NP / NYP / TP / RP",
+            role: "Robotics Technologist / Assistant Engineer",
+            durationYears: "3 Years",
+            cumulativeYears: "3 Years (Direct from SEC)",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.poly.state !== "bad",
+            merText: "4 G3 + 1 G2 pass (Net ELR2B2-C ≤ 22; Math & Science/D&T passed)",
+            recommendedCombiKey: "poly_eng",
+            overview: "Machine vision, ROS (Robot Operating System), embedded AI microprocessors, IoT network architecture, and collaborative robots (Cobots).",
+            curriculum: "Control Engineering, Applied AI for Robotics, Machine Learning, Power Electronics, Autonomous Mobile Robots (AMR), Industry Capstone.",
+            compensation: "A*STAR and Economic Development Board (EDB) industry sponsorships offer full tuition waivers + living allowances."
+          },
+          {
+            id: "isl_wsd_robotics",
+            title: "ITE Work-Study Diploma in Automation & Robotics",
+            institution: "ITE with Semiconductor & Precision Engineering Firms",
+            role: "Automation Specialist / Lead Robotics Technician",
+            durationYears: "2.5 Years",
+            cumulativeYears: "4.5 to 5.5 Years",
+            isPaid: true,
+            payHighlight: "💰 Earn S$2,000 – S$2,700/month salary + 100% employer tuition sponsorship!",
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "Higher Nitec in Engineering / Electronics with employer interview",
+            recommendedCombiKey: "ite_hn2_eng",
+            overview: "Work directly on high-tech automated cleanrooms and robotized assembly lines. The manufacturing employer pays your full diploma tuition and regular monthly pay.",
+            curriculum: "Smart Factory Integration, Python for Industrial Automation, SCADA Systems, Robotic Vision Inspection, Predictive Maintenance.",
+            compensation: "Full monthly salary (S$2,000–S$2,700/mo), shift allowances, CPF, health insurance, and zero tuition debt."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-jc",
+        stageTitle: "Stage 3: Junior College & Pre-University Route",
+        stageSubtitle: "GCE A-Levels Academic Pre-U Track (2 Years in JC / 3 Years in MI)",
+        islands: [
+          {
+            id: "isl_jc_robotics",
+            title: "Junior College: Pre-U Physics & Computing Stream",
+            institution: "All Junior Colleges islandwide",
+            role: "Pre-University A-Level Student (Direct pathway to University B.Eng Robotics & AI)",
+            durationYears: "2 Years",
+            cumulativeYears: "2 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.mi.state !== "bad",
+            merText: "5 G3 subjects (Gross L1R4 ≤ 16 for JC / ≤ 20 for MI; G3 EL C6, Math D7)",
+            recommendedCombiKey: "jc_sci",
+            overview: "2-year A-Level academic preparation in H2 Computing, H2 Physics, and H2 Mathematics. Directly qualifies for top university degrees in Robotics Engineering, Electrical Engineering, and Artificial Intelligence without polytechnic detours!",
+            curriculum: "GCE A-Levels: H2 Computing, H2 Physics, H2 Mathematics, H2 Further Math / Chemistry, General Paper.",
+            compensation: "DSTA and Agency for Science, Technology and Research (A*STAR) scholarships offer tuition fees + stipends."
+          }
+        ]
+      },
+      {
+        stageNum: 4,
+        stageId: "stage-uni",
+        stageTitle: "Stage 4: University Robotics Degree",
+        stageSubtitle: "Bachelor of Engineering in Robotics & AI",
+        islands: [
+          {
+            id: "isl_uni_robotics",
+            title: "University B.Eng in Robotics Systems / Electrical Eng",
+            institution: "NUS / NTU / SUTD / SIT",
+            role: "Robotics Research Engineer / Automation Architect",
+            durationYears: "3 to 4 Years",
+            cumulativeYears: "5 to 7 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.poly.state !== "bad" || evalResult.out.pfp.state !== "bad" || evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "GCE A-Levels (from JC) OR Polytechnic Diploma in Engineering / Robotics / Computing",
+            recommendedCombiKey: "jc_sci",
+            overview: "Deep reinforcement learning, surgical robotics, humanoid locomotion, autonomous swarm systems, and industrial smart robotics.",
+            curriculum: "Robotic Kinematics & Dynamics, Computer Vision, Digital Signal Processing, Embedded Systems Design, Autonomous Navigation, Honors Thesis.",
+            compensation: "Starting graduate salaries average S$4,800 to S$6,200/month with high global demand."
+          }
+        ]
+      },
+      {
+        stageNum: 5,
+        stageId: "stage-career",
+        stageTitle: "Stage 5: Industry Leadership",
+        stageSubtitle: "Principal Robotics Architect & R&D Lead",
+        islands: [
+          {
+            id: "isl_career_robotics_lead",
+            title: "Principal Automation Architect / VP of Engineering",
+            institution: "Multinational Tech Giants, Deep-Tech Startups, GovTech",
+            role: "Principal Robotics Architect / Engineering Director",
+            durationYears: "Ongoing",
+            cumulativeYears: "8+ Years",
+            isPaid: true,
+            payHighlight: "💰 S$8,000 – S$18,000+/month executive engineering pay",
+            merCheck: (evalResult) => true,
+            merText: "B.Eng / M.Sc + Track record of automated systems deployment",
+            recommendedCombiKey: "jc_sci",
+            overview: "Directs company-wide automation strategy, architects factory-scale autonomous systems, and patents novel robotics intellectual property.",
+            curriculum: "System Architecture, Deep Tech Patenting, Technology Strategy, Venture Leadership.",
+            compensation: "Executive compensation ($8,000 to $18,000+/month) plus equity stock options in high-growth robotics firms."
+          }
+        ]
+      }
+    ]
+  },
+
+  sports: {
+    id: "sports",
+    title: "Sports Science, Fitness & Athletic Performance",
+    icon: "🏃",
+    summary: "From fitness coach (ITE) to high-performance sports scientist, Junior College sports science pathways, and clinical exercise physiologists. Supporting Singapore's elite Olympic/Team Singapore athletes.",
+    stages: [
+      {
+        stageNum: 1,
+        stageId: "stage-ite",
+        stageTitle: "Stage 1: Fundamental Fitness Coaching",
+        stageSubtitle: "Secondary School & ITE Certification (G1/G2/G3)",
+        islands: [
+          {
+            id: "isl_ite_sport",
+            title: "ITE Higher Nitec in Sport Management (Sports Science)",
+            institution: "ITE College Central / East / West (School of Business & Services)",
+            role: "Certified Fitness Instructor / Sports Coordinator",
+            durationYears: "2 to 3 Years",
+            cumulativeYears: "2 to 3 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "3-Yr: English passed (G1/G2/G3) | 2-Yr: ELMAB3 ≤ 19",
+            recommendedCombiKey: "ite_hn_sport",
+            overview: "Anatomy & exercise physiology, gym fitness programming, health screening, sports event management, and athletic conditioning.",
+            curriculum: "Exercise Physiology, Fitness Appraisal & Testing, Sports Facility Operations, Sports Marketing & Sponsorship, Standard First Aid & CPR/AED.",
+            compensation: "Industry coaching attachments provide S$600–S$1,000/mo living allowances + industry fitness certifications."
+          }
+        ]
+      },
+      {
+        stageNum: 2,
+        stageId: "stage-pfp",
+        stageTitle: "Stage 2: Polytechnic Foundation Programme (PFP)",
+        stageSubtitle: "1-Year Poly Foundation replacing Sec 5 for G2 Students",
+        islands: [
+          {
+            id: "isl_pfp_sport",
+            title: "PFP: Sports Science, Health & Wellness",
+            institution: "Republic Polytechnic (RP)",
+            role: "Poly Foundation Student → Direct Entry into Diploma in Sport Science",
+            durationYears: "1 Year Foundation + 3 Years Poly",
+            cumulativeYears: "4 Years to Diploma",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.pfp.state !== "bad",
+            merText: "5 G2 subjects Grade 1–4 (EL, Math & Science/NFS Grade 1–3, ELMAB3 ≤ 12)",
+            recommendedCombiKey: "pfp_sport",
+            overview: "Skip Sec 5 and enter Republic Poly directly! Build solid scientific foundations in human biology, nutrition, and exercise testing to enter the Diploma in Sport & Exercise Science.",
+            curriculum: "Human Movement Foundations, Wellness Science, Coaching Communication, Applied Mathematics, Fitness Conditioning.",
+            compensation: "Eligible for SportSG youth grants and polytechnic study bursaries."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-poly",
+        stageTitle: "Stage 3: Professional Sports Diplomas",
+        stageSubtitle: "Polytechnic Full-Time vs. 💰 Paid Work-Study",
+        islands: [
+          {
+            id: "isl_poly_sport_direct",
+            title: "Polytechnic Diploma in Sport & Exercise Science",
+            institution: "Republic Poly (RP) / Singapore Poly (SP) / Ngee Ann (NP)",
+            role: "Sports Scientist / Strength & Conditioning Coach",
+            durationYears: "3 Years",
+            cumulativeYears: "3 Years (Direct from SEC)",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.poly.state !== "bad",
+            merText: "4 G3 + 1 G2 pass (Net ELR2B2-C ≤ 22; Math & Science/NFS passed)",
+            recommendedCombiKey: "poly_sport",
+            overview: "In-depth biomechanics, sports nutrition, performance analysis, VO2 max testing, sports psychology, and elite athlete rehabilitation.",
+            curriculum: "Advanced Biomechanics, Exercise Prescription, Sports Nutrition, Sports Psychology, Performance Analytics with GPS/Heart Rate telemetry, 20-week internship.",
+            compensation: "SportSG and national sports association scholarships available with training grants."
+          },
+          {
+            id: "isl_wsd_sport",
+            title: "ITE Work-Study / Technical Diploma in Health & Exercise Coaching",
+            institution: "ITE in Partnership with Sport Singapore & Fitness Academies",
+            role: "Head Performance Coach / Wellness Director",
+            durationYears: "2.5 Years",
+            cumulativeYears: "4.5 to 5.5 Years",
+            isPaid: true,
+            payHighlight: "💰 Earn S$1,900 – S$2,600/month salary + 100% course sponsorship!",
+            merCheck: (evalResult) => evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "Higher Nitec in Sport Management with fitness screening",
+            recommendedCombiKey: "ite_hn_sport",
+            overview: "Work directly in high-performance athletic training facilities and wellness academies while earning full monthly pay and receiving a fully sponsored diploma.",
+            curriculum: "Strength & Conditioning Protocols, Corrective Exercise Strategies, Client Health Management, Sports Technology Integration, Group Coaching Leadership.",
+            compensation: "Monthly salary (S$1,900 to S$2,600/month) plus coaching commission bonuses and 100% employer tuition sponsorship."
+          }
+        ]
+      },
+      {
+        stageNum: 3,
+        stageId: "stage-jc",
+        stageTitle: "Stage 3: Junior College & Pre-University Route",
+        stageSubtitle: "GCE A-Levels Academic Pre-U Track (2 Years in JC / 3 Years in MI)",
+        islands: [
+          {
+            id: "isl_jc_sport",
+            title: "Junior College: Pre-U Sports & Life Sciences Stream",
+            institution: "Junior Colleges offering Biology/PE streams (e.g. TMJC, VJC, RJC, ACJC)",
+            role: "Pre-University A-Level Student (Direct pathway to NTU Sports Science / SIT Physiotherapy)",
+            durationYears: "2 Years",
+            cumulativeYears: "2 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.mi.state !== "bad",
+            merText: "5 G3 subjects (Gross L1R4 ≤ 16 for JC / ≤ 20 for MI; G3 EL C6, Math D7)",
+            recommendedCombiKey: "jc_sci",
+            overview: "2-year A-Level academic preparation in H2 Biology, H2 Chemistry/Physics, and H2 Mathematics. Fast-tracks into NTU/NIE Sports Science & Management, or professional Physiotherapy degrees at SIT without diploma detours!",
+            curriculum: "GCE A-Levels: H2 Biology (Human Physiology, Cellular Energetics), H2 Chemistry, H2 Mathematics / PE, General Paper, Project Work.",
+            compensation: "Singapore National Olympic Council (SNOC) and Sports Excellence (spex) Scholarships available."
+          }
+        ]
+      },
+      {
+        stageNum: 4,
+        stageId: "stage-uni",
+        stageTitle: "Stage 4: University Sports Degree",
+        stageSubtitle: "B.Sc in Sports Science & Management / Physiotherapy",
+        islands: [
+          {
+            id: "isl_uni_sport",
+            title: "University B.Sc in Sports Science & Management / Physiotherapy",
+            institution: "Nanyang Technological University (NTU/NIE) / SIT",
+            role: "High-Performance Sports Scientist / Sports Physiotherapist",
+            durationYears: "3 to 4 Years",
+            cumulativeYears: "5 to 7 Years from Sec 4",
+            isPaid: false,
+            merCheck: (evalResult) => evalResult.out.jc.state !== "bad" || evalResult.out.poly.state !== "bad" || evalResult.out.pfp.state !== "bad" || evalResult.out.hn3.state !== "bad" || evalResult.out.hn2.state !== "bad",
+            merText: "GCE A-Levels (from JC) OR Polytechnic Diploma in Sports Science / Allied Health",
+            recommendedCombiKey: "jc_sci",
+            overview: "Advanced cardiovascular physiology, molecular exercise science, injury biomechanics, neuromuscular adaptation, and clinical physiotherapy.",
+            curriculum: "Motor Control & Learning, Exercise Biochemistry, Advanced Sports Nutrition, Orthopedic Rehabilitation, Capstone Sports Science Thesis.",
+            compensation: "Starting graduate salaries range from S$3,800 to S$5,200/month with national team deployment opportunities."
+          }
+        ]
+      },
+      {
+        stageNum: 5,
+        stageId: "stage-career",
+        stageTitle: "Stage 5: National Sports Leadership",
+        stageSubtitle: "Head of High Performance & Elite Sports Directorate",
+        islands: [
+          {
+            id: "isl_career_sport_lead",
+            title: "Head of Sports Science / National Team Director",
+            institution: "Singapore Sport Institute (SSI), Olympic Council, International Teams",
+            role: "Head of High Performance / Chief Exercise Physiologist",
+            durationYears: "Ongoing",
+            cumulativeYears: "8+ Years",
+            isPaid: true,
+            payHighlight: "💰 S$6,000 – S$14,000+/month sports leadership pay",
+            merCheck: (evalResult) => true,
+            merText: "B.Sc / M.Sc Sports Science + High-Performance coaching record",
+            recommendedCombiKey: "jc_sci",
+            overview: "Directs national athletic science preparation for the Olympic Games, Asian Games, and SEA Games. Designs sports science support systems for top national athletes.",
+            curriculum: "Elite Sports Policy, High-Performance Strategy, Applied Sports Technology, Olympic Campaign Management.",
+            compensation: "Executive sports science leadership compensation ($6,000 to $14,000+/month) with international tournament travel."
+          }
+        ]
+      }
+    ]
+  }
+};
+
+let selectedCareerCluster = "computing";
+let activeIslandObj = null;
+
+function getHighestEligibleStartingStage(evalResult){
+  if(!evalResult || !evalResult.out) return null;
+  // 1. Junior College / MI (Stage 3 Academic Track)
+  if((evalResult.out.jc && evalResult.out.jc.state !== "bad") || (evalResult.out.mi && evalResult.out.mi.state !== "bad")){
+    return { stageNum: 3, name: "Junior College (2-Year A-Levels)", stageId: "stage-3", track: "jc" };
+  }
+  // 2. Polytechnic Year 1 (Stage 3 Applied Track)
+  if(evalResult.out.poly && evalResult.out.poly.state !== "bad"){
+    return { stageNum: 3, name: "Polytechnic Year 1 Diploma", stageId: "stage-3", track: "poly" };
+  }
+  // 3. Polytechnic Foundation Programme (Stage 2)
+  if(evalResult.out.pfp && evalResult.out.pfp.state !== "bad"){
+    return { stageNum: 2, name: "Polytechnic Foundation Programme (PFP)", stageId: "stage-pfp", track: "pfp" };
+  }
+  // 4. ITE Higher Nitec (Stage 1)
+  if((evalResult.out.hn2 && evalResult.out.hn2.state !== "bad") || (evalResult.out.hn3 && evalResult.out.hn3.state !== "bad")){
+    return { stageNum: 1, name: "ITE Higher Nitec", stageId: "stage-ite", track: "ite" };
+  }
+  return null;
+}
+
+function scrollToHighestEligibleStage(stageInfo){
+  if(!stageInfo) return;
+  const targetId = stageInfo.track === "jc" ? "stage-jc-track" : (stageInfo.track === "poly" ? "stage-poly-track" : stageInfo.stageId);
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      const el = document.getElementById(targetId) || document.getElementById(stageInfo.stageId);
+      if(el){
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 140);
+  });
+}
+
+function renderCareerLadders(){
+  const cluster = CAREER_LADDERS[selectedCareerCluster] || CAREER_LADDERS.computing;
+  const activeSubs = rows.filter(r => r.taken !== false && r.lv != null && r.pass != null);
+  const evalResult = evaluate(activeSubs);
+  const highestStage = getHighestEligibleStartingStage(evalResult);
+
+  const stageIte = cluster.stages.find(s => s.stageId === "stage-ite");
+  const stagePfp = cluster.stages.find(s => s.stageId === "stage-pfp");
+  const stagePoly = cluster.stages.find(s => s.stageId === "stage-poly");
+  const stageJc = cluster.stages.find(s => s.stageId === "stage-jc");
+  const stageUni = cluster.stages.find(s => s.stageId === "stage-uni");
+  const stageCareer = cluster.stages.find(s => s.stageId === "stage-career");
+
+  const isJcOpen = Boolean(stageJc && stageJc.islands.some(isl => isl.merCheck(evalResult)));
+
+  // Render Cluster Summary Box
+  const sumBox = $("careerSummaryBox");
+  if(sumBox){
+    let statusHtml = "";
+    if(highestStage){
+      statusHtml = `<span class="career-status-pill status-open">🎯 Auto-scrolling to: <strong>${esc(highestStage.name)}</strong> (Highest Eligible)</span>`;
+    } else if(activeSubs.length === 0){
+      statusHtml = `<span class="career-status-pill status-locked">ℹ️ Set subject grades in Results to view unlocked stages</span>`;
+    } else {
+      statusHtml = `<span class="career-status-pill status-locked">🔒 Foundation stages shown; check prerequisites</span>`;
+    }
+
+    const jcJumpHtml = isJcOpen
+      ? `<button type="button" class="career-jump-btn ${highestStage && highestStage.track === "jc" ? "is-highest" : ""}" data-target-stage="stage-jc-track">🏛️ Stage 3: JC Route ${highestStage && highestStage.track === "jc" ? "★ Highest" : ""}</button>`
+      : "";
+
+    const jumpButtonsHtml = `
+      <div class="career-jump-bar">
+        <span class="career-jump-lbl">Jump to Entry Point:</span>
+        ${jcJumpHtml}
+        <button type="button" class="career-jump-btn ${highestStage && highestStage.track === "poly" ? "is-highest" : ""}" data-target-stage="stage-poly-track">🎓 Stage 3: Poly Diplomas ${highestStage && highestStage.track === "poly" ? "★ Highest" : ""}</button>
+        <button type="button" class="career-jump-btn ${highestStage && highestStage.track === "pfp" ? "is-highest" : ""}" data-target-stage="stage-pfp">🚀 Stage 2: PFP ${highestStage && highestStage.track === "pfp" ? "★ Highest" : ""}</button>
+        <button type="button" class="career-jump-btn ${highestStage && highestStage.track === "ite" ? "is-highest" : ""}" data-target-stage="stage-ite">⚙️ Stage 1: ITE ${highestStage && highestStage.track === "ite" ? "★ Highest" : ""}</button>
+        <button type="button" class="career-jump-btn" data-target-stage="stage-uni">🎓 Stage 4: University</button>
+        <button type="button" class="career-jump-btn" data-target-stage="stage-career">💼 Stage 5: Leadership</button>
+      </div>
+    `;
+
+    sumBox.innerHTML = `
+      <div class="career-summary-top">
+        <div class="career-summary-title">
+          <span>${cluster.icon}</span>
+          <span>${esc(cluster.title)}</span>
+        </div>
+        ${statusHtml}
+      </div>
+      <p style="font-size:12.5px;color:#cbd5e1;margin:0;line-height:1.45;">${esc(cluster.summary)}</p>
+      ${jumpButtonsHtml}
+    `;
+
+    sumBox.querySelectorAll(".career-jump-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetEl = document.getElementById(btn.dataset.targetStage);
+        if(targetEl){
+          targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+  }
+
+  // Render Mind Map Canvas with Stages and Islands
+  const canvas = $("careerMapCanvas");
+  if(!canvas) return;
+  canvas.innerHTML = "";
+
+  function createIslandCard(isl, stageTitle, isOpen, isHighestEntry){
+    const islEl = document.createElement("div");
+    islEl.className = `career-island ${isOpen ? "island-open" : "island-locked"}`;
+    islEl.tabIndex = 0;
+    islEl.setAttribute("role", "button");
+    islEl.setAttribute("aria-label", `${isl.title}: Click for detailed curriculum and timeline`);
+
+    islEl.innerHTML = `
+      <div>
+        <div class="island-top">
+          <div>
+            <div class="island-title">${esc(isl.title)}</div>
+            <div class="island-inst">${esc(isl.institution)}</div>
+          </div>
+          <span style="font-size:22px;">${cluster.icon}</span>
+        </div>
+        <div class="island-badges">
+          <span class="island-badge-time">⏱️ ${esc(isl.durationYears)}</span>
+          <span class="island-badge-cumul">📅 ${esc(isl.cumulativeYears)}</span>
+          ${isHighestEntry && isOpen ? `<span class="island-badge-highest">★ Recommended Entry</span>` : ""}
+        </div>
+        ${isl.isPaid ? `<div class="island-badge-paid">${esc(isl.payHighlight)}</div>` : ""}
+      </div>
+      <div>
+        <div style="font-size:12px;color:#e2e8f0;font-weight:700;margin-top:4px;">Role: <span style="color:#34d399;">${esc(isl.role)}</span></div>
+        <div class="island-status-foot">
+          ${isOpen ? `<span class="open-txt">✓ Open with Your Results</span>` : `<span class="locked-txt">🔒 Prereqs needed</span>`}
+          <span style="color:var(--muted);font-weight:700;">Details &rarr;</span>
+        </div>
+      </div>
+    `;
+
+    islEl.addEventListener("click", () => openIslandDetails(isl, { stageTitle }, isOpen));
+    return islEl;
+  }
+
+  function appendDivider(label){
+    const divLine = document.createElement("div");
+    divLine.className = "island-stage-divider";
+    divLine.innerHTML = `<span>${esc(label)}</span>`;
+    canvas.appendChild(divLine);
+  }
+
+  // Stage 1: ITE Certification
+  if(stageIte){
+    const isHighest = Boolean(highestStage && highestStage.track === "ite");
+    const s1Box = document.createElement("div");
+    s1Box.id = "stage-ite";
+    s1Box.className = `career-stage-row ${isHighest ? "is-highest-entry" : ""}`;
+    s1Box.dataset.stageNum = 1;
+    s1Box.innerHTML = `
+      <div class="career-stage-h">
+        <h3>
+          <span style="color:${isHighest ? "var(--accent)" : "#34d399"};">●</span>
+          ${esc(stageIte.stageTitle)}
+          ${isHighest ? `<span class="stage-highest-badge">🎯 Your Highest Eligible Starting Point</span>` : ""}
+        </h3>
+        <span>${esc(stageIte.stageSubtitle)}</span>
+      </div>
+    `;
+    const g1 = document.createElement("div");
+    g1.className = "career-islands-grid";
+    stageIte.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      g1.appendChild(createIslandCard(isl, stageIte.stageTitle, isOpen, isHighest));
+    });
+    s1Box.appendChild(g1);
+    canvas.appendChild(s1Box);
+    appendDivider("↓ Or consider early Polytechnic Foundation Programme (PFP)");
+  }
+
+  // Stage 2: PFP
+  if(stagePfp){
+    const isHighest = Boolean(highestStage && highestStage.track === "pfp");
+    const s2Box = document.createElement("div");
+    s2Box.id = "stage-pfp";
+    s2Box.className = `career-stage-row ${isHighest ? "is-highest-entry" : ""}`;
+    s2Box.dataset.stageNum = 2;
+    s2Box.innerHTML = `
+      <div class="career-stage-h">
+        <h3>
+          <span style="color:${isHighest ? "var(--accent)" : "#34d399"};">●</span>
+          ${esc(stagePfp.stageTitle)}
+          ${isHighest ? `<span class="stage-highest-badge">🎯 Your Highest Eligible Starting Point</span>` : ""}
+        </h3>
+        <span>${esc(stagePfp.stageSubtitle)}</span>
+      </div>
+    `;
+    const g2 = document.createElement("div");
+    g2.className = "career-islands-grid";
+    stagePfp.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      g2.appendChild(createIslandCard(isl, stagePfp.stageTitle, isOpen, isHighest));
+    });
+    s2Box.appendChild(g2);
+    canvas.appendChild(s2Box);
+    appendDivider("↓ PFP foundation year feeds directly into Poly Diploma Year 1 (or direct Poly entry)");
+  }
+
+  // Stage 3: Post-Secondary Level (Diplomas & Junior College parallel)
+  const isHighestPoly = Boolean(highestStage && highestStage.track === "poly");
+  const isHighestJc = Boolean(highestStage && highestStage.track === "jc");
+  const isHighestStage3 = isHighestPoly || isHighestJc;
+
+  const s3Box = document.createElement("div");
+  s3Box.id = "stage-3";
+  s3Box.className = `career-stage-row ${isHighestStage3 ? "is-highest-entry" : ""}`;
+  s3Box.dataset.stageNum = 3;
+
+  if(!isJcOpen){
+    // When JC is not eligible for the student, HIDE the JC panel completely! Stage 3 displays the entire panel of Professional Diplomas
+    const s3Head = document.createElement("div");
+    s3Head.className = "career-stage-h";
+    s3Head.id = "stage-poly-track";
+    s3Head.innerHTML = `
+      <h3>
+        <span style="color:${isHighestStage3 ? "var(--accent)" : "#34d399"};">●</span>
+        ${esc(stagePoly.stageTitle)}
+        ${isHighestStage3 ? `<span class="stage-highest-badge">🎯 Your Highest Eligible Starting Point</span>` : ""}
+      </h3>
+      <span>${esc(stagePoly.stageSubtitle)}</span>
+    `;
+    const s3Grid = document.createElement("div");
+    s3Grid.className = "career-islands-grid";
+    stagePoly.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      s3Grid.appendChild(createIslandCard(isl, stagePoly.stageTitle, isOpen, isHighestPoly));
+    });
+    s3Box.append(s3Head, s3Grid);
+  } else {
+    // When student meets JC prerequisites, show both Diplomas and JC on the SAME level in distinct panels!
+    const s3Head = document.createElement("div");
+    s3Head.className = "career-stage-h";
+    s3Head.innerHTML = `
+      <h3>
+        <span style="color:${isHighestStage3 ? "var(--accent)" : "#34d399"};">●</span>
+        Stage 3: Post-Secondary Pathways (Diplomas &amp; Pre-University)
+        ${isHighestStage3 ? `<span class="stage-highest-badge">🎯 Your Highest Eligible Starting Point</span>` : ""}
+      </h3>
+      <span>Parallel Options: Applied Polytechnic / Work-Study Diplomas vs. Academic Junior College Track</span>
+    `;
+
+    const parallelWrap = document.createElement("div");
+    parallelWrap.className = "career-parallel-wrap";
+
+    // Panel A: Professional Diplomas
+    const polyPanel = document.createElement("div");
+    polyPanel.className = `career-track-panel track-poly ${isHighestPoly ? "is-highest-track" : ""}`;
+    polyPanel.id = "stage-poly-track";
+    polyPanel.innerHTML = `
+      <div class="career-track-h">
+        <h4>
+          <span>🎓</span> ${esc(stagePoly.stageTitle.replace(/^Stage\s*\d+:\s*/i, ""))}
+          ${isHighestPoly ? `<span class="stage-highest-badge" style="font-size:10px;padding:2px 7px;">★ Highest</span>` : ""}
+        </h4>
+        <span class="career-track-sub">${esc(stagePoly.stageSubtitle)}</span>
+      </div>
+    `;
+    const polyGrid = document.createElement("div");
+    polyGrid.className = "career-islands-grid";
+    stagePoly.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      polyGrid.appendChild(createIslandCard(isl, stagePoly.stageTitle, isOpen, isHighestPoly));
+    });
+    polyPanel.appendChild(polyGrid);
+
+    // Panel B: Junior College & Pre-University Route
+    const jcPanel = document.createElement("div");
+    jcPanel.className = `career-track-panel track-jc ${isHighestJc ? "is-highest-track" : ""}`;
+    jcPanel.id = "stage-jc-track";
+    jcPanel.innerHTML = `
+      <div class="career-track-h">
+        <h4>
+          <span>🏛️</span> ${esc(stageJc.stageTitle.replace(/^Stage\s*\d+:\s*/i, ""))}
+          ${isHighestJc ? `<span class="stage-highest-badge" style="font-size:10px;padding:2px 7px;">★ Highest</span>` : ""}
+        </h4>
+        <span class="career-track-sub">${esc(stageJc.stageSubtitle)}</span>
+      </div>
+    `;
+    const jcGrid = document.createElement("div");
+    jcGrid.className = "career-islands-grid";
+    stageJc.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      jcGrid.appendChild(createIslandCard(isl, stageJc.stageTitle, isOpen, isHighestJc));
+    });
+    jcPanel.appendChild(jcGrid);
+
+    parallelWrap.append(polyPanel, jcPanel);
+    s3Box.append(s3Head, parallelWrap);
+  }
+  canvas.appendChild(s3Box);
+  appendDivider("↓ Both JC A-Levels and Poly Diplomas qualify for University Degrees");
+
+  // Stage 4: University Degrees (re-indexed from Stage 5)
+  if(stageUni){
+    const s4Box = document.createElement("div");
+    s4Box.id = "stage-uni";
+    s4Box.className = "career-stage-row";
+    s4Box.dataset.stageNum = 4;
+    const uniTitle = stageUni.stageTitle.replace(/^Stage\s*\d+:\s*/i, "Stage 4: ");
+    s4Box.innerHTML = `
+      <div class="career-stage-h">
+        <h3>
+          <span style="color:#34d399;">●</span>
+          ${esc(uniTitle)}
+        </h3>
+        <span>${esc(stageUni.stageSubtitle)}</span>
+      </div>
+    `;
+    const g4 = document.createElement("div");
+    g4.className = "career-islands-grid";
+    stageUni.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      g4.appendChild(createIslandCard(isl, uniTitle, isOpen, false));
+    });
+    s4Box.appendChild(g4);
+    canvas.appendChild(s4Box);
+    appendDivider("↓ Direct Progression to Senior Leadership & High-Value Industry Careers");
+  }
+
+  // Stage 5: Senior Leadership (re-indexed from Stage 6)
+  if(stageCareer){
+    const s5Box = document.createElement("div");
+    s5Box.id = "stage-career";
+    s5Box.className = "career-stage-row";
+    s5Box.dataset.stageNum = 5;
+    const leadTitle = stageCareer.stageTitle.replace(/^Stage\s*\d+:\s*/i, "Stage 5: ");
+    s5Box.innerHTML = `
+      <div class="career-stage-h">
+        <h3>
+          <span style="color:#34d399;">●</span>
+          ${esc(leadTitle)}
+        </h3>
+        <span>${esc(stageCareer.stageSubtitle)}</span>
+      </div>
+    `;
+    const g5 = document.createElement("div");
+    g5.className = "career-islands-grid";
+    stageCareer.islands.forEach(isl => {
+      const isOpen = isl.merCheck(evalResult);
+      g5.appendChild(createIslandCard(isl, leadTitle, isOpen, false));
+    });
+    s5Box.appendChild(g5);
+    canvas.appendChild(s5Box);
+  }
+}
+
+function openIslandDetails(isl, stage, isOpen){
+  activeIslandObj = isl;
+  const dlg = $("islandDlg");
+  if(!dlg) return;
+
+  const cluster = CAREER_LADDERS[selectedCareerCluster] || CAREER_LADDERS.nursing;
+  $("islDlgIcon").textContent = cluster.icon;
+  $("islDlgStageBadge").textContent = stage.stageTitle;
+  $("islDlgTitle").textContent = isl.title;
+  $("islDlgInst").textContent = isl.institution;
+  $("islDlgDuration").textContent = isl.durationYears;
+  $("islDlgCumulative").textContent = isl.cumulativeYears;
+  $("islDlgRole").textContent = isl.role;
+  $("islDlgCurriculum").textContent = isl.curriculum || isl.overview;
+  $("islDlgMerText").textContent = isl.merText;
+
+  const statEl = $("islDlgStatus");
+  if(statEl){
+    if(isOpen){
+      statEl.style.background = "rgba(16, 185, 129, 0.2)";
+      statEl.style.color = "#6ee7b7";
+      statEl.style.border = "1px solid rgba(16, 185, 129, 0.4)";
+      statEl.textContent = "✓ Eligible: Your currently selected subject combination meets the prerequisites for this stage!";
+    } else {
+      statEl.style.background = "rgba(239, 68, 68, 0.2)";
+      statEl.style.color = "#fca5a5";
+      statEl.style.border = "1px solid rgba(239, 68, 68, 0.4)";
+      statEl.textContent = `🔒 Not Yet Eligible with Current Results: ${isl.merText}`;
+    }
+  }
+
+  const paidSec = $("islDlgPaidSec");
+  if(paidSec){
+    paidSec.style.display = isl.compensation ? "block" : "none";
+    $("islDlgCompensation").textContent = isl.compensation || "";
+  }
+
+  dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+}
+
+const islandDlgClose = $("islandDlgClose");
+if(islandDlgClose){
+  islandDlgClose.addEventListener("click", () => {
+    const d = $("islandDlg");
+    if(d) d.close ? d.close() : d.removeAttribute("open");
+  });
+}
+
+const islDlgLoadBtn = $("islDlgLoadBtn");
+if(islDlgLoadBtn){
+  islDlgLoadBtn.addEventListener("click", () => {
+    if(!activeIslandObj || !activeIslandObj.recommendedCombiKey) return;
+    const d = $("islandDlg");
+    if(d) d.close ? d.close() : d.removeAttribute("open");
+    loadCourseIntoSubjects(activeIslandObj.recommendedCombiKey);
+    setAppMode("results");
+  });
+}
+
+// Career Cluster Button Listeners
+const careerClustersWrap = $("careerClusters");
+if(careerClustersWrap){
+  careerClustersWrap.addEventListener("click", (e) => {
+    const btn = e.target.closest(".career-cluster-btn");
+    if(!btn) return;
+    careerClustersWrap.querySelectorAll(".career-cluster-btn").forEach(b => b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    selectedCareerCluster = btn.dataset.cluster;
+    renderCareerLadders();
+    const activeSubs = rows.filter(r => r.taken !== false && r.lv != null && r.pass != null);
+    const evalResult = evaluate(activeSubs);
+    const highest = getHighestEligibleStartingStage(evalResult);
+    if(highest){
+      scrollToHighestEligibleStage(highest);
+    }
+  });
+}
+
+setAppMode("results");
 render();
 renderBubbles("all");
 annotateGlossary(document.getElementById("ov"));

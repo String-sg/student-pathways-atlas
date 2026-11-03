@@ -2,31 +2,33 @@
 
 ## Current PR checks
 
-Baseline: `c9eb764`. Current PR changes only availability markup/styles plus planning
-artifacts. Admissions logic and Atlas remain unchanged. Record actual execution here;
-a planned scenario is not an automated test or a passing result.
+Baseline refreshed to `edcf8e8` on 3 November 2026. The prior single-file checks
+are historical and are not reused as proof for Evan’s module-based entry.
 
 | Check | Requirement | Status |
 | --- | --- | --- |
-| Availability reflow at 320, 375 and 1440 CSS pixels | FR-001, FR-006, SC-001 | Passed local browser check, 2026-10-28 |
-| Atlas has no link/button/tab stop; words communicate status | FR-001 | Passed local browser check, 2026-10-28 |
-| Existing subject preset and reverse entry still respond | FR-003, FR-007 regression smoke | Passed local browser check, 2026-10-28 |
-| Inline scripts and Atlas source unchanged from baseline | FR-011 boundary | Passed: byte-for-byte inline-script comparison and unchanged Atlas diff |
-| Spec Kit prerequisite, task format and document-link checks | Planning consistency | Passed: prerequisites, JSON, links, ordered tasks and requirement coverage |
+| Availability at 320, 375 and 1440 effective CSS pixels | FR-001, FR-006 | Passed local check, 2026-11-03 |
+| Atlas has no action target; active module requests succeed | FR-001 | Passed local check, 2026-11-03 |
+| Preset/results, Course, Career, Detailed Grades, CCA and reload | Existing regression boundary | Passed local check, 2026-11-03 |
+| All upstream JS, archive, original styles/assets/config and Atlas unchanged | Scope boundary | Passed byte comparison to edcf8e8 |
+| Links, manifests, task coverage and Spec Kit prerequisites | Planning consistency | Passed local check, 2026-11-03 |
 
-The widths above are effective `window.innerWidth` CSS values, not just outer-window
-sizes. At 320/375 the entries stack and document width equals viewport width; at 1440
-they share a row within the viewport. DOM inspection found no focusable controls in
-the availability section. The 6-G3 combined-science preset, mobile result view and
-reverse-planning entry responded, and no console errors were captured. This is a
-regression smoke check, not an admissions-accuracy or complete mobile usability result.
+![Refreshed mobile placeholder](../../docs/images/pathways-placeholder-mobile.jpg)
 
-![Local placeholder at 375 CSS pixels](../../docs/images/pathways-placeholder-mobile.jpg)
+The availability cards fit at effective 320/375/1440 CSS pixels and contain no Atlas
+control targets. The page itself has pre-existing overflow: at 320/375 the document
+is 417px wide, with `.panel-btns` / `#reset` extending beyond the viewport. This PR
+changes no upstream control layout; fixing it remains UX-03 / T011. No whole-page
+reflow pass is claimed. Existing preset → results, Course and Career entry, Detailed
+Grades and CCA responded. Detailed mode, CCA and eight subject rows restored after
+reload. Local module requests succeeded and no console errors were captured. These
+are smoke checks, not independent rule or complete persistence verification.
 
-Document review mapped 11 functional requirements and 5 success criteria to 20 ordered
-tasks; 5 setup/placeholder tasks are complete and 15 implementation/release tasks remain.
-Review caught and corrected profile-version identity, runtime-row/file normalisation,
-and existing browser Save/restore/error coverage before the final consistency check.
+All new implementation tasks remain planned. Export/import round trips must include
+detailed-grade mode, grade/provenance, CCA, Results/Course/Career mode and selected career
+cluster, not just subject rows. Persistence tests must include asynchronous IndexedDB
+restore and localStorage disagreement. Grade defaults inferred from pass/fail must be
+labelled as assumptions/unconfirmed, not actual entered results.
 
 ## Future journey and rule checks
 

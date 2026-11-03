@@ -23,13 +23,13 @@ Please preserve these acknowledgements when adapting the work. As prototypes, te
 
 | Item | Status |
 | --- | --- |
-| Pathway Explorer in [index.html](index.html) | Available |
+| Pathway Explorer in [Evan - Pathways/index.html](Evan%20-%20Pathways/index.html) | Available |
 | Student Pathway Atlas in [`student-pathway-atlas/`](student-pathway-atlas/) | Prototype retained; Coming soon in the shared entry |
 | Shared admissions-reference comparison | Planned after scope and independently reviewed cases are agreed |
 | Shared Pathways journey/rule tests | Planned; Atlas already includes its own engine, matcher and browser checks |
 | Pathways export/import and summary PDF | Specified for review; not implemented |
 
-The current explorer lets users select subjects, subject levels (G1, G2, or G3), and results to explore possible post-secondary pathways. It also includes destination-first planning, course comparisons, and a glossary. Its interface is labelled for the Singapore–Cambridge Secondary Education Certificate (SEC) 2028 framework.
+Evan’s modular explorer lets users select subjects, subject levels (G1, G2, or G3), pass/fail or detailed grades, CCA and results to explore possible post-secondary pathways. It also includes destination-first planning, course comparisons, and a glossary. Its interface is labelled for the Singapore–Cambridge Secondary Education Certificate (SEC) 2028 framework.
 
 These are prototypes for exploration and discussion. Check current official admissions requirements before using an output to guide an actual subject or course decision.
 
@@ -51,11 +51,21 @@ implementing the remaining work. There is no Spec Kit requirement for people usi
 
 ## Try the current prototype
 
-1. Download this repository using **Code → Download ZIP** and unzip it, or clone it.
-2. Keep `index.html`, `background.png`, and `logo.png` together in the same folder.
-3. Open `index.html` in a modern web browser.
+1. Download or clone this repository.
+2. From the repository root, run `python3 -m http.server 18765 --bind 127.0.0.1`.
+3. Open [Pathways](http://127.0.0.1:18765/Evan%20-%20Pathways/).
 
-There is no installation or build step. Google Fonts are loaded online. The app uses the browser's local storage to save subject selections.
+Pathways now lives in `Evan - Pathways/` with separate CSS, data, engines and app modules.
+Keep that folder structure intact. HTTP serving is required for ES modules; opening
+its HTML through `file://` is not a supported run path. No package install/build is
+needed. Google Fonts load online. Subject rows, detailed-grade mode and CCA are stored
+locally using localStorage and IndexedDB. `indexOLD.html` is Evan’s preserved archive.
+Atlas retains its own separately documented offline run instructions.
+
+The planning PR is refreshed against Evan’s 29 October update. It preserves his
+Results, Course and Career modes, detailed grades, aggregates, local persistence,
+assets and Firebase configuration. It adds only the product-availability section and
+its isolated stylesheet; future rules, mobile and export work remain in the task list.
 
 ## Adding your prototype
 

@@ -2,7 +2,8 @@
 
 ## Current authorised availability entry (US1)
 
-- Root `index.html` continues directly into Pathways.
+- `Evan - Pathways/index.html` is the active entry; serve it over HTTP. The removed
+  root entry stays removed; `indexOLD.html` remains an unchanged archive.
 - Pathways has a visible current-tool status; Atlas uses a legible grey treatment,
   the words "Coming soon" and a short results-exploration description.
 - Atlas has no link, button, click handler or tab stop. Do not use a dead anchor or
@@ -14,7 +15,7 @@
 
 One user action opens a print-ready summary with a standard save-as-PDF path, clearly
 labelled so users understand the browser's save/print step. It includes inputs,
-selected comparisons, explanations, official references, exam/admissions years,
+detailed-grade/pass-fail mode, explicitly entered grades, CCA, selected comparisons, explanations, official references, exam/admissions years,
 build/rules versions and limitations. It shows partial/unconfirmed information honestly.
 Check pagination, long text, comparison labels, and absence of clipped controls/content.
 A direct PDF library is not required unless this path fails the agreed phone acceptance.
@@ -23,7 +24,7 @@ A direct PDF library is not required unless this path fails the agreed phone acc
 
 Use a downloaded JSON document with the fields and limits in [data-model.md](../data-model.md).
 Suggested filename: `pathways-plan-YYYY-MM-DD.json`, without identity details.
-Export reads application state; it does not submit it anywhere. Import treats the file
+Export includes Results/Course/Career mode and selected career cluster as well as inputs. Export reads application state after asynchronous persistence restoration; it does not submit it anywhere. Import treats the file
 as untrusted input and follows validate → preview → confirm → replace. Render messages
 as text, never as imported HTML. Provide clear errors and retain current work on failure.
 
