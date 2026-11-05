@@ -3,7 +3,7 @@
   const nojs = document.getElementById('nojs');
   if (nojs) nojs.remove();
 
-  const APP_VERSION = "0.14.4";
+  const APP_VERSION = "0.19.0";
   const APP_DISPLAY_NAME = "Rosetta: Student Pathway Atlas";
   const STORE_KEY = 'rosetta-sg-pse-atlas-v0.3';
 
@@ -47,8 +47,12 @@
   const POLY_SCHOOLS = PAGE.poly_schools || {};
   const CAL = PAGE.calendar || { terms: [], fills: [], rows: [] };
   const ARTS = PAGE.arts || [];
-  const RIASEC_OF = {};  // MOE field (or JC/MI stream) -> letters, our suggestion (data/taxonomy/riasec_fields.csv)
-  (PAGE.riasec || []).forEach(function (r) { RIASEC_OF[r.field] = String(r.letters || '').toUpperCase(); });
+  // RIASEC letters: every poly and ITE course its own (data/taxonomy/riasec_courses.csv, from the RIASEC engine), keyed institution|course code;
+  // a field's list holds its courses' letters, so a field fits when a course in it does; a JC or MI stream keeps our suggestion.
+  // The engine is unsure of some courses' letters: those say "May fit", and fields_may holds their letters
+  const RIASEC_DATA = PAGE.riasec || {};
+  const RIASEC_COURSE = RIASEC_DATA.courses || {}, RIASEC_FIELD = RIASEC_DATA.fields || {}, RIASEC_STREAM = RIASEC_DATA.streams || {};
+  const RIASEC_UNSURE = new Set(RIASEC_DATA.unsure || []), RIASEC_FIELD_MAY = RIASEC_DATA.fields_may || {};
   // the engine contract: LEP host JCs, when the data carries them (absent: LEP points are never added to a number)
   const LEP_HOSTS = Array.isArray(DATA.lep_hosts) ? DATA.lep_hosts :
     (REQ && Array.isArray(REQ.lep_hosts) ? REQ.lep_hosts : null);
@@ -93,7 +97,6 @@
     bandsInfo: function (top, grade) { return 'Marks become grades with the usual school bands (' + top + ' and above is ' + grade + '). Your exam grades come from SEAB.'; },
     cca: 'CCA',
     ccaOpts: ['Excellent', 'Good', 'Fair', 'None', 'Not sure'],
-    whereHead: 'What are you looking at?',
     whereOpts: { jc: 'JC', mi: 'MI', poly: 'Polytechnic', ite: 'ITE', arts: 'Arts (NAFA, LASALLE)' },
     school: 'Your secondary school',
     schoolOpt: 'Your secondary school (optional)',
@@ -104,6 +107,7 @@
     affiliated: 'Affiliated JC:',
     lepHead: 'Language elective programme',
     lepOpts: ['None', 'CLEP', 'MLEP', 'TLEP'],
+    lepGrades: function (p) { return 'Pick ' + p + ' only if your grades meet its entry requirements. Your aggregates here assume they do.'; }, lepSee: function (p) { return p + ' on the MOE website'; },
     fieldsHead: 'Fields (optional)',
     fieldsPicked: function (n) { return 'Fields: ' + n + ' picked'; },
     interests: 'Interests', optional: 'optional',
@@ -111,7 +115,7 @@
     yourCode: function (c) { return 'Your code: ' + c.join(' '); },
     quiz: 'Take the quiz on MySkillsFuture',
     quizUrl: 'https://www.myskillsfuture.gov.sg/content/student/en/secondary-v2/discover-yourself.html',
-    show: 'Show my courses',
+    next: 'Next: Options', showCourses: function (n) { return 'Show ' + n + (n === 1 ? ' course' : ' courses'); },
     // the step after the subjects, and the subjects card folded to one line
     calc: 'Calculate my aggregates',
     ccaShort: function (c) { return c && c !== 'Not sure' ? 'CCA ' + c : ''; },
@@ -132,7 +136,7 @@
     nextLine: 'Next:',
     by: function (d) { return 'by ' + d; },
     search: 'Search courses',
-    chip: { field: 'Field', inst: 'Institution', sort: 'Sort', map: 'Map', filter: 'Filter' },
+    chip: { map: 'Map' },
     // the bar on Courses, the route chips, a tile's pop-over and About
     groupBy: 'Group', groupOpts: { none: 'None', field: 'Field', inst: 'Institution' },
     showN: function (n) { return 'Show ' + n + ' more'; },
@@ -153,7 +157,7 @@
     allStreams: function (n) { return n === 2 ? 'for both streams' : 'for all ' + (['', '', 'two', 'three', 'four', 'five'][n] || n) + ' streams'; },
     rangeNone: function (ex, agg) { return (ex ? ex + ' ' : '') + agg + ' net aggregate: not published'; },
     pfpMeets: 'You meet the entry requirements.',
-    pfpShare: function () { return 'Polytechnic Foundation Programme: you meet the entry requirements. ' + STRINGS.pfpNoCut.split('. ')[0] + '.'; },
+    pfpShare: function () { return 'Polytechnic Foundation Programme: you meet the entry requirements, but this does not guarantee a place. Places go by merit.'; },
     condLine: function (t) { return 'On condition: ' + t; },
     unsureLine: function (who) { return 'Not sure: check with the ' + who + '.'; },
     cantLine: function (t) { return "Can't apply: " + t; },
@@ -186,7 +190,7 @@
     missSafer: 'One point better would make it safer.',
     missOne: function () { return S.year === 2027 ? 'One point short of the estimated cut-off.' : 'One point short of last year’s cut-off.'; },
     missShort: function (n) { return n + ' points short.'; },
-    tileOpen: '✓ open', tileNeeds: function (n) { return '✗ needs ' + n; }, tileNo: '✗ not open',
+    tileOpen: '✓ open', tileOnly: function (n) { return '✓ ' + n + ' only'; }, tileNeeds: function (n) { return '✗ needs ' + n; }, tileNo: '✗ not open',
     // a closed tile with no number says why, in short, from MOE's table (the open-to group) or the engine's reason
     tileWhy: { '5G3': 'Needs G3 subjects', '4G3+1G2': 'Needs G3 subjects', '5G2': 'Needs G2 subjects', '4G1': 'Needs 4 subjects', mtl: 'Needs Mother Tongue' },
     tileLevels: function (lvs) { return 'Needs ' + lvs.join(' or ') + ' subjects'; },
@@ -222,8 +226,15 @@
       return 'Worked out from the 2026 ' + from + (asIs || same ? (ranges.length > 1 ? ' ranges' : ' range') : ranges.length > 1 ? ' ranges, ' + joinAnd(ranges) : ' range, ' + ranges[0]) + ': ' + why;
     },
     estShare: function (agg, list, basis) { return 'Estimated 2028 ' + agg + ' net aggregate ' + STRINGS.estFrom(basis) + ': ' + list; },
-    ite3Scale: 'On this scale every G3 or G2 subject counts as the top grade, so 4 subjects give 4 points before CCA.',
-    pfpNoCut: 'PFP has no cut-offs. Meet the requirements and you can apply.',  // r4 Q2: the one PFP sentence (share, table and Details take its first part)
+    ite3Scale: 'On this scale G3 A1 to D7 and G2 1 to 3 each count as 1 point, so 4 such subjects give 4 points before CCA.',
+    pfpNoCut: 'You can apply if you meet the requirements, but this does not guarantee a place. Places go by merit.',  // r4 Q2: the one PFP sentence (share, table and Details take its first part)
+    jieONeeds: "Most courses need 2 O-Level grades from 1 to 8 in any two subjects. Some need only a completed O-Level.",
+    pfpFloors: 'MOE also needs grade 3 or better at G2 in English, Math and one relevant subject, and grade 4 or better in two other subjects.',
+    levelCleared: 'Grades cleared for the new level.',
+    ccaMissing: 'Your CCA is not in yet. It can lower some aggregates by up to 2 points.', ccaAdd: 'Add your CCA',
+    cantList: function (l) { return l + ' courses stay off your list on Courses until this is sorted out.'; },
+    pickYear: 'Pick your exam year first.',
+    pfpBonus: 'Bonus points do not count towards the limit of 12, but they count when you are posted.',
     jieONoCut: "JIE 'O' does not publish cut-offs. If you meet the requirements, you can apply.",
     remindNet: function (agg, v) { return 'Your net ' + agg + ': ' + v; },
     remindGross: function (agg, v) { return 'Your gross ' + agg + ': ' + v; },
@@ -240,11 +251,22 @@
     openTo: function (path, need, have) { return path + ' is open to students taking at least ' + need + '. You take ' + have + '.'; },
     another: 'Another route', others: 'Other routes',
     noMatch: function (parts) { return 'No courses match ' + parts + '.'; },
-    clearFilters: 'Clear filters',
-    removeFilter: function (n) { return 'Remove the filter ' + n; },
-    done: 'Done',
+    clearOptions: 'Clear options',
+        done: 'Done',
     close: 'Close',
-    sheetFields: 'Fields', sheetInst: 'Institutions', sheetSort: 'Sort',
+    sheetSort: 'Sort',
+    optInterest: 'What interests you?', optFields: { poly: 'Polytechnic courses', ite: 'ITE courses' }, optInsts: 'Which institutions?', optNoFields: 'Fields are for polytechnic and ITE courses. Add either one on Courses.',
+    riasecHead: 'About RIASEC', riasecIntro: 'RIASEC groups what people like doing into six types. The MySkillsFuture quiz gives you your top three, strongest first. Tap them in that order.',
+    riasecUse: 'Courses that often suit your code are tagged “Fits your interests”, and their fields come first. Where we are less sure which interests a course suits, the tag says “May fit your interests”. Nothing is hidden. This is only a guide.',
+    riasecRule: 'A course fits when your first letter is one of its top two letters and you share at least two letters.',
+    riasecHow: 'We worked out each course’s letters from the jobs it leads to, using three lists: the jobs on its CourseFinder page, our own list, and a US list that links courses to jobs.',
+    riasecJob: { msf: 'A job’s letters come from the closest job role on MySkillsFuture. Where it lists no such role, they come from O*NET, which is based on US jobs.',
+      onet: 'A job’s letters come from O*NET, which is based on US jobs.' },
+    riasecStream: 'For a JC or MI stream, the letters are our own suggestion, from Holland’s descriptions of the six types.',
+    riasecCredit: 'Job role letters from MySkillsFuture, Skills and Workforce Development Agency. The course letters are our own working from them.',
+    riasecOnet: ['This page includes information from the O*NET 31.0 Database by the U.S. Department of Labor, Employment and Training Administration (USDOL/ETA). Used under the ', 'CC BY 4.0 license', '. O*NET® is a trademark of USDOL/ETA. We have modified all or some of this information, matching Singapore job titles to O*NET occupations and combining their letters into course letters. USDOL/ETA has not approved, endorsed, or tested these modifications.'],
+    ccBy: 'https://creativecommons.org/licenses/by/4.0/',
+    collected: ['We collect what you tap, including the courses you open or star and how they fit you, your exam year and level, one of your aggregates, and your RIASEC letters. Each visit stands alone, with nothing linking it to your last one. Your subjects, grades, marks and school stay on this device.', 'We don’t collect your name, IP address or the time of day. We have your email only if you add it to a bug report. We keep each visit for 2 years, then only totals.'],
     instTypes: { JC: 'Junior colleges', MI: 'Millennia Institute', Polytechnic: 'Polytechnics', ITE: 'ITE colleges', Arts: 'Arts institutions' },
 
     // the gap badge (D8) and the states (D7)
@@ -260,14 +282,25 @@
     fifthSchool: 'Your school handles the application.',
     applyDirect: function (inst) { return 'Apply to ' + inst + ' directly'; },
     fits: 'Fits your interests',
-    fitInfo: 'Courses that often suit your RIASEC code are shown first. This is only a guide.',
+    mayFit: 'May fit your interests',
+    // Details: where the student's top interest sits in the course's letters, in words
+    fitLine: function (who, letters, top) {
+      const n = function (l) { return STRINGS.riasecNames[l] + ' (' + l + ')'; }, ls = letters.split(''), i = ls.indexOf(top), mine = n(top) + ', your top interest.';
+      if (i === 0) return who + ' draws most on ' + mine;
+      if (i === 1) return who + ' draws most on ' + n(ls[0]) + ', then ' + mine;
+      if (i === 2) return who + ' draws on ' + n(ls[0]) + ' and ' + n(ls[1]) + ' before ' + mine;
+      const list = ls.map(n);
+      return who + ' draws most on ' + (list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0]) + '. It draws less on ' + mine;
+    },
+    thisCourse: 'This course',
+    fitRough: 'The jobs this course leads to point in different ways, so this is only a rough guide.',
     starAria: function (t) { return 'Star ' + t; },
     toastStarred: 'Starred', toastUnstarred: 'Removed from Starred', undo: 'Undo',
     mark: { yes: '✓', cond: '!', unsure: '?', no: '✗', notyet: '…' },
 
     // Screen 3
     back: { courses: '‹ Courses', starred: '‹ Starred' },
-    tabs: { input: 'Results', courses: 'Courses', starred: 'Starred', dates: 'Dates' },
+    tabs: { input: 'Results', options: 'Options', courses: 'Courses', starred: 'Starred', dates: 'Dates' },
     star: '☆ Star', starred: '★ Starred',
     uses: function (name) { return 'Uses ' + name; },
     counted: 'Which subjects counted',
@@ -318,11 +351,10 @@
     starredHead: 'Starred',
     starredEmpty: 'Tap ☆ to keep a course here.',
     cols: { course: 'Course', inst: 'Institution', net: 'Your net', cut: "Last year's cut-off", gap: 'Difference', link: 'Link' },
-    share: function (n) { return 'Share (' + n + ')'; },
+    dayInLife: 'A day in the life', share: 'Share to WhatsApp', shareSheet: 'Share your shortlist',
     copy: 'Copy text', whatsapp: 'Open WhatsApp', copied: 'Copied', copyFailed: 'The text is selected. Copy it from here.',
     shareHead: 'My course shortlist:',
     starredHeadWide: 'Starred — compare',
-    osShare: 'More ways to share',
     bestAt: function (c) { return 'best: ' + c; },
     affiliatedTag: 'Affiliated',
 
@@ -354,7 +386,7 @@
     notOpenFold: function (n) { return n + ' not open to you'; },
     notOpenLine: function (names) { return 'Not open to you: ' + names.join(', '); },
     alsoOpen: 'Also open to you',
-    indicative: 'indicative', noCutTag: 'no cut-off',
+    indicative: 'indicative', noCutTag: 'by merit',
     indTip26: function (ex, cut) { return 'Last year’s range: the net aggregates of the students admitted in the ' + ex + '. The top number, ' + cut + ', was the cut-off. A lower aggregate is better.'; },
     indTip27: function (how) { return 'An estimate from the 2026 cut-offs. ' + how; },
     indTipJC: function (how) { return S.year === 2027 ? 'Each number is an estimate of the JC’s 2028 cut-off. ' + how : 'Each number is the JC’s 2026 cut-off: the net aggregate of the last student admitted in the 2026 JAE. A lower aggregate is better.'; },
@@ -373,24 +405,18 @@
     foot: 'Not an MOE app',
     data: 'CourseFinder data, 17 Oct 2026',
     about: 'About these numbers',
-    saved: 'Saved on this device only',
+    saved: 'Your grades and marks stay on this device until you tap Start again. On a shared computer, tap it before you leave',
     caution: 'These aggregate scores are meant as a reference for applicants applying to these courses, and do not constitute the admission scores for subsequent admission exercises.',
     cautionSrc: 'MOE, JAE 2027 booklet',
     cautionUrl: 'https://www.moe.gov.sg/post-secondary/admissions/jae',
     // r1 D14: in 2027 the ranges on screen are estimates
-    aboutEst: 'In the 2027 view, the ranges for JCs, MI, polytechnic diplomas and ITE courses are estimated 2028 ranges, worked out from the 2026 ones until MOE publishes the 2028 figures. The ITE 2-year ranges taken from O-Level cut-offs are rough conversions.',
+    aboutEst: 'In the 2027 view, the ranges are estimates from the 2026 ones until MOE publishes the 2028 figures.',
     aboutParas: [
-      'Your gross aggregate adds up the grade points of the subjects that count for the course. Your net aggregate is the gross aggregate minus any bonus points, such as CCA points. A lower aggregate is better.',
-      'The range, for example 4–11, shows the net aggregates of the students admitted in the 2026 JAE or JIE. The higher number, 11, is the cut-off: the last student admitted had a net aggregate of 11.',
-      'If your net aggregate is 7, it is 4 points better than the cut-off, shown as +4. A minus number such as −2 means you are 2 points short of the cut-off. Cut-offs change every year, so use them as a guide.'
+      'Your net aggregate is your gross aggregate minus bonus points, such as CCA points. A lower aggregate is better.',
+      'A range such as 4–11 shows the net aggregates of the students admitted in 2026. The higher number, 11, is the cut-off.',
+      '+4 means you are 4 points better than the cut-off, and −2 means you are 2 points short of the cut-off. Cut-offs change every year, so use them as a guide.'
     ],
-    aboutLines: [
-      '',
-      'Your results slip and the forms from MOE and your school are the official record.',
-      'Marks become grades with the usual school bands. Your exam grades come from SEAB.',
-      'Courses that often suit your RIASEC code are shown first. This is only a guide.',
-      'The table that links RIASEC letters to fields is our suggestion, from Holland’s descriptions of the six types.'
-    ],
+    aboutOfficial: 'Your results slip and the forms from MOE and your school are the official record.',
     aboutSources: 'Courses, entry requirements and ranges: MOE CourseFinder and SchoolFinder, 17 Oct 2026. Dates: MOE, ITE, NAFA and LASALLE pages, 18 Oct 2026.',
 
     // Start again (D12)
@@ -407,7 +433,6 @@
     // map (D17)
     mapHead: 'Map',
     mapTap: 'Tap a dot or a name to show only that institution’s courses.',
-    mapList: function (n) { return 'See the list (' + n + ') ›'; },
     mapType: { JC: 'JC', MI: 'Millennia Institute', Poly: 'Polytechnic', ITE: 'ITE college' },
     mapNone: 'No course you can apply for',
     mapDot: function (name, n) { return name + ': ' + n + ' ' + (n === 1 ? 'course' : 'courses') + ' you can apply for'; },
@@ -532,12 +557,13 @@
   const MIXED_MIN = 3;
 
   // D5: the "Another route" line, by level. Words: MOE's booklet and pages (the route cards).
+  const LEP_URL = { CLEP: 'https://www.moe.gov.sg/education-in-sg/our-programmes/clep-jc', MLEP: 'https://www.moe.gov.sg/education-in-sg/our-programmes/mlep-jc', TLEP: 'https://www.moe.gov.sg/education-in-sg/our-programmes/tlep-jc' };
   const ANOTHER = {
     jie_o: { name: "ITE 3-year Higher Nitec (JIE 'O')", short: "JIE 'O'", levels: ['O'],
       text: ["You can apply for ITE 3-year Higher Nitec courses through JIE 'O' in January 2027."],
       link: { label: 'JIE on the MOE website', url: 'https://www.moe.gov.sg/post-secondary/admissions/jie' } },
     sec5: { name: 'Secondary 5', levels: ['N(A)'],
-      text: ['Secondary 5 is also an option. Your school handles the application.'],
+      text: ['Secondary 5 may also be open to you. Your school handles the application.'],
       link: { label: 'N-Level routes on the MOE website', url: 'https://www.moe.gov.sg/post-secondary/admissions/n-level' } },
     jie_e: { name: "JIE 'E'", levels: ['N(T)'],
       text: ["If you have 0 or 1 N-Level pass, you can apply for ITE 4-year Higher Nitec courses with the Enhanced Foundation Programme through JIE 'E' in December 2026."],
@@ -635,6 +661,50 @@
     'JIE-N-2027': ["Apply for ITE 3-year courses (JIE 'N')"], 'PFP-2027': ['Apply for PFP'], 'PSE-2028': ['Apply in the PSE', 'PSE posting results']
   };
 
+  /* One stand-alone action: an icon and a word on a soft pill */
+  const ICON = { share: '<path d="M4 12l16-8-6 16-2.5-6.5z"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>', edit: '<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>', close: '<path d="M6 6l12 12M18 6L6 18"/>', info: '<circle cx="12" cy="12" r="9.5"/><path d="M12 11.5v5.5M12 7.5h.01"/>' };
+  const ico = function (n) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + ICON[n] + '</svg>'; };
+  const act = function (label, icon, attrs) { return '<button type="button" class="act" ' + attrs + '>' + (icon ? ico(icon) : '') + '<span>' + esc(label) + '</span></button>'; };
+  /* Analytics and Report a bug: the shared page side. Sends nothing on a file or an artifact. */
+  const OP = window.opsPage({ project: PAGE.ops.project, hosts: PAGE.ops.hosts, version: APP_VERSION, prefix: 'rosetta-pathway', act: act, closeSheet: closeSheet, toast: toast,
+    onNewVisit: function () { TOUCHED = false; try { sessionStorage.removeItem(TOUCH_KEY); } catch (e) { /* private window */ } OP.setSnap({ mode: '', h2: [], grades: '', gpa_band: '', riasec: '' }); OP.rec('s', ROUTE.name); }, onRecOn: function () { recSnap(); } });
+  /* What the student has told us, taken each time they arrive at Courses: exam year and level, RIASEC letters, and the number on their first tile. Never subjects, grades, marks or school. */
+  // A saved student opening the page sends no results until they tap something in this visit
+  const TOUCH_KEY = STORE_KEY + '-tapped';
+  const TOUCH_GAP = 30 * 60 * 1000;  // a visit is a tab until left for 30 minutes
+  let TOUCHED = false;
+  const markTouched = function () { try { sessionStorage.setItem(TOUCH_KEY, String(Date.now())); } catch (e) { /* private window */ } };
+  try { TOUCHED = Date.now() - Number(sessionStorage.getItem(TOUCH_KEY) || 0) < TOUCH_GAP; } catch (e) { /* private window */ }  // a reload is the same visit
+  ['click', 'keydown'].forEach(function (ev) { document.addEventListener(ev, function () { if (TOUCHED) return; TOUCHED = true; markTouched(); if (OP_STARTED) recSnap(); }, { capture: true, passive: true }); });
+  window.addEventListener('pagehide', function () { if (TOUCHED) markTouched(); });
+  document.addEventListener('visibilitychange', function () { if (TOUCHED && document.visibilityState === 'hidden') markTouched(); });
+  function recSnap() {
+    if (!OP.recording() || !TOUCHED) return;
+    OP.setSnap({ mode: S.year && S.level ? S.year + ' ' + S.level : '', h2: [], grades: '', gpa_band: '', riasec: S.riasec.join('') });
+    OP.rec('snap');
+    ensureR();
+    if (!resultsIn()) return;
+    const t = aggTiles().filter(function (r) { return !r.short && /^\d+$/.test(String(r.num)); })[0];
+    if (t) OP.recOne('agg', t.agg + ':' + t.num);
+  }
+  /* What the student saw when they acted on a course: where it sat in the list, whether it was tagged Fits, and its verdict */
+  function seen(id, on) {
+    const c = cardById(id);
+    if (!c) return null;
+    const g = cardGroup(c), rows = $$('#s-list .cc'), o = { fit: c.fits ? 1 : 0, v: c.state === 'no' || g === 'out' ? 'no' : c.state === 'unsure' ? 'nn' : g === 'border' ? 'bo' : 'ok' };
+    const at = rows.map(function (x) { return x.dataset.id; }).indexOf(id);
+    if (at >= 0) o.p = at;
+    if (on != null) o.on = on ? 1 : 0;
+    return o;
+  }
+  const NOT_RECORDED = ['sheet-close', 'rec-set', 'bug-open', 'bug-send', 'tile-close', 'ind', 'copy'];
+  const REC_VALUE = ['riasec', 'route-add', 'route-hide', 'groupby', 'map-dot'];
+  function recTap(d, t) {
+    if (NOT_RECORDED.indexOf(d) >= 0) return;
+    if (d === 'star') { const id = 'c' + hash36(t.dataset.key); OP.rec('star', id, seen(id, S.stars.indexOf(t.dataset.key) < 0)); return; }
+    OP.rec(d, REC_VALUE.indexOf(d) >= 0 ? t.dataset.v : '');
+  }
+
   /* ================================================================================================ state */
   function defaultState() {
     return { year: null, level: null, mode: 'grade', rows: [], cca: null, where: [], school: '', lep: 'None', fields: [], riasec: [],
@@ -652,7 +722,6 @@
   let LVL_OPEN = '';  // the row whose level choice is showing (2026 exams)
   let PICK_OPEN = '';  // the row whose subject choice is open again ("change")
   let addOpen = false, addQuery = '', schoolQuery = '', pasteOpen = false, pasteReadBack = '', pasteUnread = [];
-  let fieldsOpen = false;
   const KEEP = {};  // disclosures the student opened, kept open across re-renders (memory only)
   function keep(k) { return ' data-keep="' + esc(k) + '"' + (KEEP[k] ? ' open' : ''); }
 
@@ -938,7 +1007,7 @@
     return ex;
   }
   function anotherRoutes() {
-    if (S.year === 2027) return (fifthYear() === true || fifthYear() === null) ? ['fifth'] : [];
+    if (S.year === 2027) return (fifthYear() === true || fifthYear() === null || fifthFew()) ? ['fifth'] : [];
     const live = levelsLive();
     return Object.keys(ANOTHER).filter(function (k) { const a = ANOTHER[k]; return !a.pse && a.levels.some(function (l) { return live.indexOf(l) >= 0; }); });
   }
@@ -1151,6 +1220,7 @@
   function scoreSentence(res) {
     const name = shortName(res.id);
     if (res.gross == null) return cantSentence(res, name);
+    if (res.net == null && /^ELMAB3:PFP/.test(res.id)) return 'Your ' + name + ' is ' + res.gross + '. ' + STRINGS.pfpBonus;
     if (res.net == null) return 'Your ' + name + ' is ' + res.gross + '. ' + whoCounts(res.id) + counts(whoCounts(res.id)) + 'no bonus points.';
     const b = res.gross - res.net;
     if (!b) return 'Your net ' + name + ' is ' + res.net + '. You have no bonus points for it.';
@@ -1328,13 +1398,13 @@
   function g3ToG2(p) { return p <= 3 ? 1 : p <= 6 ? 2 : Math.min(5, p - 4); }
   const ITE3_2028 = /^(R2B2|R1B3-[ABC]|B4)\(2027\)$/;
   const OLEVEL_FIVE = ['ELR2B2-C', 'ELR1B3-B', 'ELB4-A'];
-  function estimate2028(agg, x, from) {
+  function estimate2028(agg, x, from, rec) {
     if (x == null || !isFinite(x)) return null;
     agg = String(agg);
     if (!/\(2027\)$/.test(agg)) return null;  // only 2027 (SEC) ids; a 2026 id never gets an estimate
     let v;
     if (/^L1R4\(/.test(agg)) v = from === 'L1R4' ? Math.min(20, x) : Math.min(16, roundHalfUp(x * 5 / 6));
-    else if (/^ELR2B2-[ABCD]\(/.test(agg)) v = Math.min(22, roundHalfUp(x * 4 / 5 + g3ToG2(roundHalfUp(x / 5))));
+    else if (/^ELR2B2-[ABCD]\(/.test(agg)) v = Math.min(rec && rec.course_name === 'Nursing' ? 24 : 22, roundHalfUp(x * 4 / 5 + g3ToG2(roundHalfUp(x / 5))));
     else if (/^ELMAB3:ITE\(/.test(agg)) {
       if (OLEVEL_FIVE.indexOf(from) >= 0) { const q = Math.floor(x / 5), r = x % 5; v = r * g3ToG2(q + 1) + (5 - r) * g3ToG2(q); }
       else if (!from || from === 'ELMAB3') v = x;
@@ -1367,7 +1437,7 @@
       const v = read(rec, 'JIE-N-2027'); if (v) src = { from: v, fromAgg: rec.aggregate_type, basis: 'jie' };
     } else return null;
     if (!src) return { none: true };
-    const lo = estimate2028(agg, src.from[0], src.fromAgg), hi = estimate2028(agg, src.from[1], src.fromAgg);
+    const lo = estimate2028(agg, src.from[0], src.fromAgg, rec), hi = estimate2028(agg, src.from[1], src.fromAgg, rec);
     return lo == null || hi == null ? { none: true } : { range: [lo, hi], from: src.from, fromAgg: src.fromAgg, basis: src.basis };
   }
   function hasCutoffs(sec) { return S.year === 2026 || (S.year === 2027 && !!sec && EST_SECS.indexOf(sec.id) >= 0); }
@@ -1435,12 +1505,20 @@
   }
 
   /* ================================================================================================ cards (D7) */
-  function fieldLetters(field) { return RIASEC_OF[field] || ''; }
-  // [new] a course fits a code when its field's letters include the code's first letter, or two of its letters
+  function streamLetters(stream) { return RIASEC_STREAM[stream] || ''; }
+  // 'fit' when a course in the field fits and the engine is sure of its letters, 'may' when only an unsure one does
+  function fieldFit(wid, field) {
+    const k = (wid === 'ite' ? 'ite' : 'poly') + '|' + field;
+    return (RIASEC_FIELD[k] || []).some(fits) ? 'fit' : (RIASEC_FIELD_MAY[k] || []).some(fits) ? 'may' : '';
+  }
+  // the one tag for a fit, on a card, a field and Details
+  function fitTag(may) { return may ? '<span class="tag tag-may">' + esc(STRINGS.mayFit) + '</span>' : '<span class="tag tag-fit">' + esc(STRINGS.fits) + '</span>'; }
+  // The University Atlas's rule: a course fits when the student's
+  // first letter is one of its first two letters and they share two letters, or all of a shorter code (a JC stream has one or two)
   function fits(letters) {
     if (!S.riasec.length || !letters) return false;
-    const hit = S.riasec.filter(function (l) { return letters.indexOf(l) >= 0; });
-    return letters.indexOf(S.riasec[0]) >= 0 || hit.length >= 2;
+    const shared = S.riasec.filter(function (l) { return letters.indexOf(l) >= 0; }).length;
+    return letters.slice(0, 2).indexOf(S.riasec[0]) >= 0 && shared >= Math.min(2, S.riasec.length, letters.length);
   }
   function makeOffer(r, label) {
     const net = offerNet(r);
@@ -1458,8 +1536,17 @@
     c.id = 'c' + hash36(c.key);
     c.state = c.offers.reduce(function (b, o) { return STATE_RANK[o.state] < STATE_RANK[b] ? o.state : b; }, c.offers[0].state);
     c.best = bestOffer(c.offers);
-    c.letters = c.letters || fieldLetters(c.field);
-    c.fits = fits(c.letters);
+    // each course has its own letters; a card that holds several (an ITE course at three colleges, a PFP cluster) fits when one of them does
+    const keys = c.kind === 'jc' || c.kind === 'arts' ? [] : c.codes.map(function (k, i) { return (c.insts[i] || c.insts[0]) + '|' + k; });
+    const own = keys.map(function (k) { return RIASEC_COURSE[k] || ''; });
+    // the card's letters: a course on it that fits and that the engine is sure of, else one that fits, else the first
+    let at = own.findIndex(function (l, i) { return fits(l) && !RIASEC_UNSURE.has(keys[i]); });
+    if (at < 0) at = own.findIndex(fits);
+    if (at < 0) at = 0;
+    c.letters = own[at] || '';
+    c.unsure = !!keys.length && RIASEC_UNSURE.has(keys[at]);
+    c.fits = own.some(fits);
+    c.may = c.fits && c.unsure;
     return c;
   }
   const STREAM_ORDER = ['Arts', 'Science', 'Commerce', 'International Baccalaureate'];
@@ -1481,7 +1568,7 @@
               streams: list.map(function (r) { return r.jc_stream || r.course_name; }) }));
           });
           // a JC's streams fit different interests: the card fits when any stream does
-          out.forEach(function (c) { if (c.kind === 'jc' && c.streams) { const l = c.streams.map(fieldLetters).join(''); c.letters = ''; c.fits = c.streams.some(function (s) { return fits(fieldLetters(s)); }); c.streamLetters = l; } });
+          out.forEach(function (c) { if (c.kind === 'jc' && c.streams) { const l = c.streams.map(streamLetters).join(''); c.letters = ''; c.fits = c.streams.some(function (s) { return fits(streamLetters(s)); }); c.streamLetters = l; } });
         } else if (sec.kind === 'course') {
           rs.forEach(function (r) {
             const rec = RECS[r.requirement_key] || {};
@@ -1526,9 +1613,8 @@
     const offer = makeOffer(r0);
     offer.state = same ? states[0] : 'unsure';
     offer.mixed = !same;
-    const letters = fields.map(fieldLetters).join('');
     return finishCard({ key: sec.id + '|' + key, where: wid, sec: sec.id, kind: 'pfp', title: title, inst: r0.institution, insts: [r0.institution],
-      codes: rs.map(function (r) { return r.course_code; }), field: fields.length === 1 ? fields[0] : '', fields: fields, letters: letters, special: special,
+      codes: rs.map(function (r) { return r.course_code; }), field: fields.length === 1 ? fields[0] : '', fields: fields, special: special,
       cluster: special ? PFP_CLUSTERS[3] : r0.pfp_cluster,
       offers: [offer], sortName: (r0.institution + ' ' + title).toLowerCase(),
       diplomas: rs.map(function (r, i) {
@@ -1629,7 +1715,7 @@
   function filterParts() {
     const parts = [];
     if (S.q) parts.push('“' + S.q + '”');
-    S.fields.forEach(function (f) { parts.push(f); });
+    S.fields.forEach(function (f) { parts.push(fieldName(f)); });
     S.insts.forEach(function (i) { parts.push(i); });
     return parts;
   }
@@ -1639,8 +1725,9 @@
       if (mine.length && !card.insts.some(function (i) { return mine.indexOf(i) >= 0; })) return false;
     }
     if (S.fields.length && (card.kind === 'course' || card.kind === 'ite' || card.kind === 'pfp')) {
-      const fs = card.fields || (card.field ? [card.field] : []);
-      if (!fs.some(function (f) { return S.fields.indexOf(f) >= 0; })) return false;
+      // Polytechnic and ITE each have their own ticks: a tick on one leaves the other alone
+      const wid = card.where === 'ite' ? 'ite' : 'poly', fs = card.fields || (card.field ? [card.field] : []);
+      if (S.fields.some(function (k) { return fieldRoute(k) === wid; }) && !fs.some(function (f) { return S.fields.indexOf(fieldKey(wid, f)) >= 0; })) return false;
     }
     if (S.q) {
       const q = norm(S.q);
@@ -1733,10 +1820,10 @@
       h += subjectsHTML();
       if (calcOn()) {
         h += '<div id="aggs-slot">' + summaryHTML('results') + '</div>';  // levels 1–3, live once calculated
-        h += whereCardHTML();
-        h += interestsHTML();
+        h += schoolCardHTML();
       }
     }
+    if (S.year) h += '<div class="uagain">' + act(STRINGS.restart, 'close', 'data-do="restart" aria-haspopup="dialog"') + '</div>';
     h += '</div>';  // no footer (About, behind the i)
     holdFloor(el);
     el.innerHTML = h;
@@ -1746,12 +1833,9 @@
   }
   // K8: "What are you looking at?" is one card; each chip's follow-ups sit inside it, under the chips, in chip order
   function oLevelTrack() { return S.year === 2026 && S.level === 'O'; }
-  // the JC follow-ups (secondary school, LEP) open under the JC chip; hidden means ignored, saved values kept
-  function jcAsked() { return oLevelTrack() && S.where.indexOf('jc') >= 0; }
+  // Secondary school and LEP change a JC aggregate, so they sit on Results whenever JC is a route at this level
+  function jcAsked() { return oLevelTrack() && liveWheres().indexOf('jc') >= 0; }
   let RENDERED_INPUT = false;
-  let FU_SHOWN = [];  // follow-ups on screen last time, so a new one can pulse once (K9)
-  let FIELDS_SEEN = false;
-  let CHIP_WHY = '';
   // the tag's words open under the tag and stay inside the window
   function placeTip(btn) {
     const tip = btn && btn.nextElementSibling;
@@ -1782,44 +1866,9 @@
   function closeTips(except) { $$('.ind[aria-expanded="true"], .tile[aria-expanded="true"]').forEach(function (x) { if (x !== except) x.setAttribute('aria-expanded', 'false'); }); }
   document.addEventListener('pointerdown', function (e) { const w = e.target.closest && e.target.closest('.ind-w, .tile-w'); closeTips(w ? w.querySelector('.ind, .tile') : null); }, true);
   document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') return; const t = $('.tile[aria-expanded="true"]'); closeTips(null); if (t) t.focus({ preventScroll: true }); });
-  function whereCardHTML() {
-    const live = liveWheres().filter(function (w) { return !resultsIn() || !routeShut(w) || routeReachable(w); });
-    const fus = [];
-    if (jcAsked() && live.indexOf('jc') >= 0 && !routeShut('jc')) fus.push('jc');  // no school question for a shut JC
-    if (S.where.some(function (w) { return WHERE[w] && WHERE[w].fields && live.indexOf(w) >= 0; })) {
-      fus.push('fields');
-      if (!FIELDS_SEEN) { fieldsOpen = true; FIELDS_SEEN = true; }
-    }
-    if (live.length < 2 && !fus.length) return '';
-    let h = '<section class="card where-card"><h2 class="q-h">' + esc(STRINGS.whereHead) + '</h2>';
-    // "All" is on when no route is picked, and tapping it clears the picks
-    const none = !S.where.some(function (w) { return live.indexOf(w) >= 0; });
-    // once the results are in, a route with nothing open is greyed; a tap says why, in place, and adds nothing
-    const shut = {};
-    live.forEach(function (w) { shut[w] = routeShut(w); });
-    if (live.length > 1) h += '<div class="chips-wrap" role="group" aria-label="' + esc(STRINGS.whereHead) + '">' + anyChip('where-all', 'all', STRINGS.allWord, none) +
-      live.map(function (w) {
-        return shut[w] ? anyChip('where-off', w, STRINGS.whereOpts[w], false, ' aria-disabled="true" data-shut="' + w + '" title="' + esc(shut[w].reason) + '"')
-          : anyChip('where', w, STRINGS.whereOpts[w], S.where.indexOf(w) >= 0);
-      }).join('') + '</div>';
-    if (CHIP_WHY && shut[CHIP_WHY]) h += '<p class="chip-why" role="status" data-shut="' + CHIP_WHY + '">' + esc(shut[CHIP_WHY].reason) + '</p>';
-    // no reason lines under the chips for a picked route's closed
-    // pathways; a closed pathway better grades could open is a greyed tile with its own pop-over, and one they
-    // couldn't isn't shown
-    fus.forEach(function (k) {
-      const fresh = RENDERED_INPUT && FU_SHOWN.indexOf(k) < 0;
-      h += '<div class="fu' + (fresh ? ' pulse' : '') + '" data-fu="' + k + '">';
-      if (k === 'jc') {
-        h += '<p class="fu-l">' + esc(STRINGS.whereOpts.jc) + '</p>' + schoolHTML() +
-          '<p class="q-h fu-h">' + esc(STRINGS.lepHead) + '</p>' + segHTML('lep', STRINGS.lepOpts, S.lep || 'None', { label: STRINGS.lepHead });
-      } else {
-        const names = ['poly', 'ite'].filter(function (w) { return S.where.indexOf(w) >= 0 && live.indexOf(w) >= 0; }).map(function (w) { return STRINGS.whereOpts[w]; });
-        h += '<p class="fu-l">' + esc(names.join(' and ')) + '</p>' + fieldsHTML();
-      }
-      h += '</div>';
-    });
-    FU_SHOWN = fus;
-    return h + '</section>';
+  function schoolCardHTML() {
+    if (!jcAsked() || routeShut('jc')) return '';
+    return '<section class="card where-card">' + schoolHTML() + '<p class="q-h fu-h">' + esc(STRINGS.lepHead) + '</p>' + segHTML('lep', STRINGS.lepOpts, S.lep || 'None', { label: STRINGS.lepHead }) + (S.lep && S.lep !== 'None' ? '<p class="hint">' + esc(STRINGS.lepGrades(S.lep)) + ' ' + ext(LEP_URL[S.lep], STRINGS.lepSee(S.lep)) + '</p>' : '') + '</section>';
   }
   function subjectsHTML() {
     // A5: once calculated, the card folds to one line (the subjects and grades, CCA, ✎ Edit) until Edit reopens it
@@ -2187,29 +2236,27 @@
     if (!m.length) return '<p class="hint" role="status">' + esc(STRINGS.schoolNone(q)) + '</p>';
     return m.map(function (name) { return '<button type="button" class="pick-item" data-do="school-pick" data-v="' + esc(name) + '" data-wc="0">' + esc(name) + '</button>'; }).join('');
   }
-  // the fields of the Where values picked, one full MOE name per line (D2.7); the same state as the Screen 2 filter
+  // A field's tick: ITE's carry a prefix, because Engineering is a field on both lists and each list has its own ticks
+  function fieldKey(wid, f) { return wid === 'ite' ? 'ite|' + f : f; }
+  function fieldRoute(k) { return /^ite\|/.test(k) ? 'ite' : 'poly'; }
+  function fieldName(k) { return String(k).replace(/^ite\|/, ''); }
+  // the ticks of the routes on screen
   function fieldList() {
-    let list = [];
     const picked = scope();
-    if (picked.indexOf('poly') >= 0) list = list.concat(POLY_FIELDS);
-    if (picked.indexOf('ite') >= 0) list = list.concat(ITE_FIELDS);
-    return list.filter(function (f, i) { return list.indexOf(f) === i; }).sort();
+    return (picked.indexOf('poly') >= 0 ? POLY_FIELDS : []).concat(picked.indexOf('ite') >= 0 ? ITE_FIELDS.map(function (f) { return fieldKey('ite', f); }) : []);
   }
-  function fieldChecklistHTML() {
-    return '<ul class="checklist">' + fieldList().map(function (f) {
-      const id = 'fld-' + hash36(f);
-      return '<li><input type="checkbox" id="' + id + '" data-change="field" data-v="' + esc(f) + '"' + (S.fields.indexOf(f) >= 0 ? ' checked' : '') + '><label for="' + id + '" data-wc="0">' + esc(f) + '</label></li>';
+  // One card per route with fields: Show all while nothing is ticked, then the fields that fit the student's code, then the rest
+  function fieldChecklistHTML(wid) {
+    const list = (wid === 'ite' ? ITE_FIELDS : POLY_FIELDS).slice().sort(function (a, b) { return !!fieldFit(wid, b) - !!fieldFit(wid, a) || (a < b ? -1 : 1); });
+    const none = !S.fields.some(function (k) { return fieldRoute(k) === wid; });
+    return '<ul class="checklist"><li><input type="checkbox" id="fld-all-' + wid + '" data-change="field-all" data-w="' + wid + '"' + (none ? ' checked' : '') + '><label for="fld-all-' + wid + '">' + esc(STRINGS.showAll) + '</label></li>' + list.map(function (f) {
+      const k = fieldKey(wid, f), id = 'fld-' + hash36(k);
+      return '<li><input type="checkbox" id="' + id + '" data-change="field" data-v="' + esc(k) + '"' + (S.fields.indexOf(k) >= 0 ? ' checked' : '') + '><label for="' + id + '"><span data-wc="0">' + esc(f) + '</span>' + (fieldFit(wid, f) ? ' ' + fitTag(fieldFit(wid, f) === 'may') : '') + '</label></li>';
     }).join('') + '</ul>';
   }
-  function fieldsHTML() {
-    const n = S.fields.length;
-    if (fieldsOpen) return '<div class="fu-q"><p class="q-h fu-h">' + esc(STRINGS.fieldsHead) + '</p>' + fieldChecklistHTML() +
-      '<button type="button" class="btn-link" data-do="fields-toggle" aria-expanded="true">' + esc(STRINGS.done) + '</button></div>';
-    return '<div class="fu-q"><button type="button" class="fold-btn" data-do="fields-toggle" aria-expanded="false">' + esc(n ? STRINGS.fieldsPicked(n) : STRINGS.fieldsHead) + '</button></div>';
-  }
-  // shown, not folded, with "optional" beside the heading
+  // The student's code from MySkillsFuture, tapped in order
   function interestsHTML() {
-    return '<section class="q q-int" aria-labelledby="h-int"><h2 class="q-h" id="h-int">' + esc(STRINGS.interests) + ' <span class="opt-l">' + esc(STRINGS.optional) + '</span></h2>' +
+    return '<section class="card q-int" aria-labelledby="h-int"><h2 class="q-h opt-h" id="h-int"><span>' + esc(STRINGS.optInterest) + '</span><button type="button" class="info" data-do="riasec-info" aria-label="' + esc(STRINGS.riasecHead) + '">' + ico('info') + '</button></h2>' +
       '<div class="riasec" role="group" aria-label="Your RIASEC code, in order">' + RIASEC.map(function (l) {
         const i = S.riasec.indexOf(l);
         const full = S.riasec.length >= 3 && i < 0;
@@ -2219,16 +2266,57 @@
       (S.riasec.length ? '<p class="code-line">' + esc(STRINGS.yourCode(S.riasec)) + '</p>' : '') +
       '<p>' + ext(STRINGS.quizUrl, STRINGS.quiz) + '</p></section>';
   }
+  function riasecHTML() {
+    return '<p>' + esc(STRINGS.riasecIntro) + '</p>' + RIASEC.map(function (l) { return '<p><b>' + l + '</b> ' + esc(STRINGS.riasecNames[l]) + '</p>'; }).join('') + '<p>' + esc(STRINGS.riasecUse) + '</p><p>' + esc(STRINGS.riasecRule) + '</p>' +
+      '<p>' + esc(STRINGS.riasecHow) + ' ' + esc(STRINGS.riasecJob[RIASEC_DATA.msf ? 'msf' : 'onet']) + '</p><p>' + esc(STRINGS.riasecStream) + '</p>' +
+      (RIASEC_DATA.msf ? '<p class="hint">' + esc(STRINGS.riasecCredit) + '</p>' : '') +
+      '<p class="hint">' + esc(STRINGS.riasecOnet[0]) + ext(STRINGS.ccBy, STRINGS.riasecOnet[1]) + esc(STRINGS.riasecOnet[2]) + '</p>';
+  }
+  // Are options narrowing the list? RIASEC only orders it, so it doesn't count.
+  function optionsOn() {
+    const fl = fieldList();
+    return S.fields.some(function (k) { return fl.indexOf(k) >= 0; }) || liveInsts().length > 0;
+  }
+  // The courses the list holds: the same test as renderList, for every count of them. skipInst for the map, whose dots pick the institutions.
+  function listCards(skipInst) {
+    const out = [];
+    scope().forEach(function (wid) {
+      if (routeShut(wid)) return;
+      groupSections(wid).filter(function (sc) { return !secStatus(wid, sc).shut; }).forEach(function (sc) { Array.prototype.push.apply(out, splitCards(listItems(wid, sc, skipInst), sc).shown); });
+    });
+    return out;
+  }
+  function listCount() { return listCards().length; }
+  /* Everything a student can narrow the list by, in one place. Their results stay on Results; the routes stay beside the list on Courses. */
+  function renderOptions() {
+    const el = $('#s-options');
+    if (!el) return;
+    ensureR();
+    if (!S.year || !R) { el.innerHTML = '<div class="card empty"><p>' + esc(CORE_OK ? STRINGS.enterFirst : STRINGS.coreMissing) + '</p><a class="btn" href="#input">' + esc(STRINGS.toInput) + '</a></div>'; return; }
+    const routes = ['poly', 'ite'].filter(inScope);
+    let h = '<div class="s1"><div class="ptop"><h2 class="panel-h">' + esc(STRINGS.tabs.options) + '</h2>' + (optionsOn() ? act(STRINGS.clearOptions, 'close', 'data-do="clear-filters"') : '') + '</div>' + interestsHTML();
+    h += routes.map(function (w) { return '<section class="card"><h2 class="q-h">' + esc(STRINGS.optFields[w]) + '</h2>' + fieldChecklistHTML(w) + '</section>'; }).join('');
+    if (!routes.length) h += '<p class="hint">' + esc(STRINGS.optNoFields) + ' <a href="#courses">' + esc(STRINGS.tabs.courses) + '</a></p>';
+    h += '<section class="card"><h2 class="q-h">' + esc(STRINGS.optInsts) + '</h2>' + instOptionsHTML() + '</section></div>';
+    el.innerHTML = h;
+  }
   // the bottom bar shows nothing before "Calculate my aggregates" (the step's own button is the action), nor while
   // the subjects card is open for an edit; after it, "Show my courses", an outline when the near-miss card shows
+  // WebKit sends no focusout when a re-render or a closing sheet removes the input
+  function clearKb() { if (document.body.classList.contains('kb') && !(document.activeElement && document.activeElement.matches && document.activeElement.matches('input[type="text"], input[type="search"], textarea'))) document.body.classList.remove('kb'); }
+  function shareBtnHTML() { return '<button type="button" class="btn-primary btn-share" data-do="share">' + ico('share') + '<span>' + esc(STRINGS.share) + '</span></button>'; }
   function renderBar() {
+    clearKb();
     const bar = $('#bar');
     if (!bar) return;
-    const on = ROUTE.name === 'input' && !!S.year && !!S.level && calcOn() && !CARD_OPEN;
+    const results = ROUTE.name === 'input' && !!S.year && !!S.level && calcOn() && !CARD_OPEN, options = ROUTE.name === 'options' && !!S.year && !!R, starred = ROUTE.name === 'starred' && !isWide() && !!S.year && starredCards().length > 0;
+    const first = ROUTE.name === 'input' && !S.year ? OP.footHTML() : '';  // the first screen only: its main choice clears it
+    const on = results || options || starred || !!first;
     bar.hidden = !on;
     document.body.classList.toggle('has-bar', on);
     if (!on) { bar.innerHTML = ''; return; }
-    bar.innerHTML = '<button type="button" class="' + (solidAction() === 'show' ? 'btn-primary' : 'btn btn-wide') + '" data-do="show">' + esc(STRINGS.show) + '</button>';
+    bar.innerHTML = results ? '<button type="button" class="' + (solidAction() === 'show' ? 'btn-primary' : 'btn btn-wide') + '" data-do="go-options">' + esc(STRINGS.next) + '</button>'
+      : options ? '<button type="button" class="btn-primary" data-do="show">' + esc(STRINGS.showCourses(listCount())) + '</button>' : starred ? shareBtnHTML() : first;
   }
   // the engine's reading of a row, in plain words, at the row (the problem list)
   function problemHTML(p, row) {
@@ -2450,7 +2538,7 @@
     if (!d) return live.filter(function (w) { return w !== 'arts' || arts; });
     const tierOf = function (w) { return Math.min.apply(null, pathSecs(w).map(function (sc) { return TIER[sc.id] || 9; })); };
     const top = topTier();
-    return live.filter(function (w) { return w === 'arts' ? arts : d.routes.indexOf(w) >= 0 || (!!routeShut(w) && tierOf(w) <= top && routeReachable(w)); });
+    return live.filter(function (w) { return w === 'arts' ? arts : d.routes.indexOf(w) >= 0 || (tierOf(w) <= top && ((!!routeShut(w) && routeReachable(w)) || pathSecs(w).some(function (sc) { return cantWork(w, sc); }))); });
   }
   // the pathways a tile row stands for: a default route's pathways in the default tiers; every pathway of any other route
   function rowSecs(wid) {
@@ -2511,7 +2599,7 @@
     }
     return null;
   }
-  // the key aggregates as tiles, one per figure (two pathways with one number share a tile): { label, num, title, off, why, keys }
+  function cantWork(wid, sc) { const cs = cardsIn(wid, sc.id); return (wid === 'jc' || wid === 'mi') && cs.length > 0 && cs.every(function (c) { return c.state === 'unsure'; }); }
   function aggTiles() {
     const rows = [], bySig = {};
     cardRoutes().forEach(function (wid) {
@@ -2519,14 +2607,15 @@
       rowSecs(wid).forEach(function (sc) {
         const st = secStatus(wid, sc);
         if (st.none) return;
-        if ((st.shut || shut) && !reachable(wid, sc)) return;
-        const f = aggFigure(wid, sc), key = SHUT_KEY[sc.id] || sc.id, off = !!(st.shut || shut);
+        const cant = cantWork(wid, sc);  // not closed: its tile says to check
+        if ((st.shut || shut) && !cant && !reachable(wid, sc)) return;
+        const f = aggFigure(wid, sc), key = SHUT_KEY[sc.id] || sc.id, off = !cant && !!(st.shut || shut);
         const parts = f ? f.parts.slice().sort(function (a, b) { return parseFloat(a.num) - parseFloat(b.num); }) : [{ name: aggOfSec(sc.id), num: '—' }];
         const title = f ? f.parts.map(function (p) { return p.name + ' ' + p.num; }).join(' · ') + (f.work ? ' (' + f.work + ')' : '') : aggOfSec(sc.id);
-        const why = st.shut ? st.reason : shut ? shut.reason : '', need = off ? needOf(wid, sc) : null;
+        const why = !off ? '' : st.shut ? st.reason : shut ? shut.reason : '', need = off ? needOf(wid, sc) : null;
         // a closed tile with no number shows its short reason; tiles with the same reason merge ("JC, MI, Poly")
         const short = !f && off ? tileWhy(wid, sc) : '';
-        const sig = short ? 'why|' + short : title + '|' + off;
+        const sig = short ? 'why|' + short : title + '|' + off + '|' + (need ? need.max : '');
         const label = PW_ROW[sc.id] || STRINGS.routeShort[wid];
         if (bySig[sig]) { const r0 = bySig[sig]; r0.labels.push(label); r0.keys.push(key); r0.pw.push({ wid: wid, sc: sc }); if (why && r0.why.indexOf(why) < 0) r0.why.push(why); return; }
         // a closed tile shows the number its rule judges. JC's rule is on the gross L1R5, so a gross 21 with one CCA
@@ -2537,7 +2626,12 @@
       });
     });
     // an open tile with no course open for sure, only "check with the school" ones, says so (the engine's call stands)
-    rows.forEach(function (r) { if (!r.off) r.check = checkOnly(r.pw); });
+    rows.forEach(function (r) {
+      if (r.off) return;
+      r.check = checkOnly(r.pw);
+      const open = []; r.pw.forEach(function (x) { cardsIn(x.wid, x.sc.id).forEach(function (c) { if (canApply(c)) open.push(c); }); });
+      r.only = open.length && open.every(function (c) { return c.kind === 'course' && c.title === 'Nursing'; }) ? 'Nursing' : '';
+    });
     return rows;
   }
   // who to check with when none of these pathways' courses is open for sure and some are "check": NAFA, LASALLE, or the school
@@ -2565,7 +2659,7 @@
     // pop-over the indicative tag uses, anchored to the tile, over the page (nothing under it moves)
     const tileHTML = function (r) {
       const k = r.keys[0], id = 'tp-' + variant + '-' + k;
-      const word = r.check ? esc(STRINGS.mark.unsure + ' ' + STRINGS.checkWith(r.check)) : !r.off ? esc(STRINGS.tileOpen) : r.need != null ? esc(STRINGS.tileNeeds('')) + '<span data-wc="0">' + r.need + '</span>' : esc(STRINGS.tileNo);
+      const word = r.check ? esc(STRINGS.mark.unsure + ' ' + STRINGS.checkWith(r.check)) : !r.off ? esc(r.only ? STRINGS.tileOnly(r.only) : STRINGS.tileOpen) : r.need != null ? esc(STRINGS.tileNeeds('')) + '<span data-wc="0">' + r.need + '</span>' : esc(STRINGS.tileNo);
       const body = r.short ? '<span class="t-k">' + esc(r.labels.join(', ')) + '</span><b class="t-r">' + esc(r.short) + '</b><span class="t-w">' + word + '</span>'
         : '<span class="t-k">' + esc(r.labels.join(', ')) + '<span data-wc="0"> · ' + esc(r.agg) + '</span></span><b class="agg-n" data-wc="0">' + esc(r.num) + '</b><span class="t-w">' + word + '</span>';
       return '<span class="tile-w"><button type="button" class="tile' + (r.off ? ' off' : r.check ? ' chk' : '') + '" data-do="tile" data-v="' + k + '"' + (r.off ? ' data-shut="' + r.keys.join(' ') + '"' : '') +
@@ -2576,8 +2670,9 @@
     let h = '<section class="card aggs' + (variant === 'courses' ? ' compact' : '') + '" id="' + (variant === 'courses' ? 'aggs-c' : 'aggs') + '" aria-label="' + esc(STRINGS.aggsHead) + '">';
     if (S.year === 2027 && !overviewPlace().group) h += '<p class="rt-note">' + esc(STRINGS.placeNeed(overviewPlace())) + '</p>';
     h += '<div class="tiles">' + tiles.map(tileHTML).join('') + '</div>';
-    h += '</section>' + (variant === 'courses' ? routeChipsHTML() : '') + nearMissHTML();  // the routes right under the tiles
+    h += '</section>' + nearMissHTML();
     if (variant !== 'results') return h;
+    if (S.pasted && !S.cca) h += '<p class="hint cca-miss">' + esc(STRINGS.ccaMissing) + ' <a href="#input" data-do="subj-edit">' + esc(STRINGS.ccaAdd) + '</a></p>';
     // no course links on Results ("Your pathways" lines, "Also open to you"): "Show my courses" in the bar is
     // the one way to Courses
     return h;
@@ -2672,7 +2767,7 @@
   }
   const SHUT_KEY = { jc: 'jc', pjc: 'jc', mi: 'mi', pmi: 'mi', poly: 'poly', ppoly: 'poly', pfp: 'pfp', ppfp: 'pfp', ite2: 'ite', pite2: 'ite', dpp: 'dpp',
     jien: 'ite3', pite3: 'ite3', ai: 'arts', pai: 'arts', nfp: 'nfp', pnfp: 'nfp' };
-  const PW_ROW = { jc: 'JC', pjc: 'JC', mi: 'MI', pmi: 'MI', poly: 'Poly', ppoly: 'Poly', pfp: 'PFP', ppfp: 'PFP', dpp: 'DPP', dppvia: 'DPP', ite2: 'ITE',
+  const PW_ROW = { jc: 'JC', pjc: 'JC', mi: 'MI', pmi: 'MI', poly: 'Poly', ppoly: 'Poly', pfp: 'PFP', ppfp: 'PFP', dpp: 'DPP', dppvia: 'DPP', ite2: 'ITE 2-year',
     pite2: 'ITE 2-year', jien: 'ITE 3-year', pite3: 'ITE 3-year', ai: 'Arts', pai: 'Arts', nfp: 'NAFA Foundation Programme', pnfp: 'NAFA Foundation Programme' };
 
   // what isn't open, route by route (or pathway by pathway inside an open route), with its reason
@@ -2761,7 +2856,7 @@
     if (c.state === 'cond') tags.push(stateTag('cond', STRINGS.state.cond));
     if (c.kind === 'pfp' && (c.state === 'yes' || c.state === 'browse')) tags.push(stateTag('yes', STRINGS.canApply));
     if (c.state === 'unsure' && c.kind !== 'arts' && c.kind !== 'jc') tags.push(stateTag('unsure', STRINGS.state.unsure));
-    if (c.fits) tags.push('<span class="tag tag-fit">' + esc(STRINGS.fits) + '</span>');
+    if (c.fits) tags.push(fitTag(c.may));
     // fix 3: an ITE course at several colleges names the college its badge comes from
     const best = c.kind === 'ite' && c.offers.length > 1 && c.best && c.best.r && c.best.gap.n != null ? STRINGS.bestAt(c.best.r.institution.replace(/^ITE College /, '')) : '';
     if (c.kind === 'jc' && S.year === 2026 && affiliatedJCs().some(function (n) { return norm(n) === norm(c.title); })) tags.push('<span class="tag">' + esc(STRINGS.affiliatedTag) + '</span>');
@@ -2787,12 +2882,6 @@
     return o.gap.n >= 0 ? STRINGS.missSafer : o.gap.n === -1 ? STRINGS.missOne() : STRINGS.missShort(-o.gap.n);
   }
   function missHTML(c, o, inline) { const t = missLine(c, o); return t ? (inline ? '<span class="cc-miss">' : '<p class="cc-miss">') + esc(t) + (inline ? '</span>' : '</p>') : ''; }
-  function stripText() {
-    const lv = levelsUsed().map(function (l) { return STRINGS.levelName[l]; });
-    const n = takenRows().length;
-    const cca = S.cca && S.cca !== 'Not sure' ? S.cca : '';
-    return STRINGS.strip(lv.join(' + ') || STRINGS.levelName[S.level] || '', n, cca);
-  }
   function chipBtn(act, label, n, expanded) {
     return '<button type="button" class="tchip" data-do="' + act + '" aria-haspopup="dialog" aria-expanded="' + !!expanded + '">' + esc(label) +
       (n ? ' <span class="count">' + n + '</span>' : '') + '<span class="caret" aria-hidden="true"></span></button>';
@@ -2827,10 +2916,7 @@
       return;
     }
     if (R.error) { el.innerHTML = '<div class="card warn"><p>' + esc(STRINGS.engineError) + '</p></div>'; return; }
-    // results from a paste: "Edit" opens the paste box, and "Next student" sits beside it
-    h += '<div class="strip"><span class="strip-t">' + esc(stripText()) + '</span>' + (S.pasted ? '<button type="button" class="btn-link" data-do="edit-paste">' + esc(STRINGS.edit) + '</button><button type="button" class="btn-link" data-do="restart" aria-haspopup="dialog">' + esc(STRINGS.nextStudent) + '</button>'
-      : '<a class="btn-link" href="#input" data-do="subj-edit">' + esc(STRINGS.edit) + '</a>') + '</div>';
-    if (calcOn()) h += summaryHTML('courses');  // the same words as on Results; once calculated, as there
+    if (calcOn() && resultsIn()) h += routeChipsHTML();  // the tiles stay on Results; the routes stay beside the list
     // no "Next:" line here (Dates has it); A: the search, then the bar that sticks
     h += '<div class="tools"><input id="q" type="search" aria-label="' + esc(STRINGS.search) + '" placeholder="' + esc(STRINGS.search) + '" value="' + esc(S.q) + '" data-input="q"></div>' + toolbarHTML();
     // fix 4: groups with something to apply for come first; a group a filter empties is left out (fix 19)
@@ -2876,10 +2962,10 @@
       body += gh + '</section>';
     });
     if (!shownTotal && filterParts().length) {
-      h += '<div class="card empty"><p>' + esc(STRINGS.noMatch(joinAnd(filterParts()))) + '</p><button type="button" class="btn" data-do="clear-filters">' + esc(STRINGS.clearFilters) + '</button></div>';
+      h += '<div class="card empty"><p>' + esc(STRINGS.noMatch(joinAnd(filterParts()))) + '</p>' + act(STRINGS.clearOptions, 'close', 'data-do="clear-filters"') + '</div>';
     } else h += body;
-    // "Another route" is an offer, shown only when none of the picked routes has anything to apply for
-    const rt = scope().some(function (w) { return shownCards(w).some(canApply); }) ? [] : anotherRoutes();
+    // "Another route" always shows: students with something open also lost sight of Sec 5, JIE 'E' and the 5th year
+    const rt = anotherRoutes();
     if (rt.length) h += routeLineHTML(rt.length > 1 ? STRINGS.others : STRINGS.another, rt.map(function (k) { return ANOTHER[k].short || ANOTHER[k].name; }).join(', '), 'another', '');
     // –D: no "Also open to you" (the route chips are under the tiles), no "Not open to you" (the tiles' pop-overs
     // say why), and no MOE links or footer (About, behind the i)
@@ -2895,7 +2981,8 @@
       g.style.setProperty('--band-h', b.offsetHeight + 'px');
       stickyH = Math.max(stickyH, b.offsetHeight);
     });
-    document.documentElement.style.setProperty('--sticky-h', (stickyH + tbH) + 'px');
+    const jh = $('.jct-h');
+    document.documentElement.style.setProperty('--sticky-h', (stickyH + tbH + (jh ? jh.offsetHeight : 0)) + 'px');
     if (isWide()) el.scrollTop = keepTop;
   }
   // a section with cut-offs groups its courses by a fixed margin rule, never a percentage:
@@ -3109,9 +3196,9 @@
   }
   function chanceCount(list) { const p = marginParts(list); return { i: p.in.length, b: p.border.length }; }
   function itemView(c, o) { const v = Object.create(c); v.offers = [o]; v.best = o; v.state = o.state; v.insts = [o.r.institution]; v.inst = o.r.institution; return v; }
-  function listItems(wid, sec) {
-    const mine = instFilterFor(wid), out = [];
-    cardsIn(wid, sec.id).filter(function (c) { return matchesFilters(c); }).forEach(function (c) {
+  function listItems(wid, sec, skipInst) {
+    const mine = skipInst ? [] : instFilterFor(wid), out = [];
+    cardsIn(wid, sec.id).filter(function (c) { return matchesFilters(c, skipInst); }).forEach(function (c) {
       (c.kind === 'ite' && c.offers.length > 1 ? c.offers.map(function (o) { return itemView(c, o); }) : [c]).forEach(function (x) {
         if (!mine.length || mine.indexOf(x.insts[0]) >= 0) out.push(x);
       });
@@ -3168,22 +3255,13 @@
     CARD_LABEL = ''; CARD_SHORT = false;
     return h + '</div>';
   }
-  // A: the bar that sticks under the top bar on Courses: Group, Filter, Map; the filters that are on under it, as chips
-  // that remove themselves, and "Show all"
+  // A: the bar that sticks under the top bar on Courses: Group, Map
   function toolbarHTML() {
     const grp = scope().some(function (w) { return !routeShut(w) && groupSections(w).some(groupable); });
-    const fl = fieldList(), fields = S.fields.filter(function (f) { return fl.indexOf(f) >= 0; }), insts = liveInsts();
     let h = '<div class="tbar" id="tbar">';
     if (grp) h += '<div class="tb-g"><span class="tb-l" aria-hidden="true">' + esc(STRINGS.groupBy) + '</span>' +
       segHTML('groupby', [['none', STRINGS.groupOpts.none], ['field', STRINGS.groupOpts.field], ['inst', STRINGS.groupOpts.inst]], GROUP, { label: STRINGS.groupBy }) + '</div>';
-    h += chipBtn('sheet-filter', STRINGS.chip.filter, fields.length + insts.length, SHEET.kind === 'filter') + '<a class="tchip" href="#map">' + esc(STRINGS.chip.map) + '</a></div>';
-    const parts = fields.map(function (f) { return ['field', f, f]; }).concat(insts.map(function (i) { return ['inst', i, INST_SHORT[i] || i]; }));
-    if (parts.length) {
-      h += '<div class="fchips">' + parts.map(function (p) {
-        return '<button type="button" class="fchip" data-do="unfilter" data-k="' + p[0] + '" data-v="' + esc(p[1]) + '" aria-label="' + esc(STRINGS.removeFilter(p[1])) + '"><span data-wc="0">' + esc(p[2]) + '</span> <span aria-hidden="true">×</span></button>';
-      }).join('') + '<button type="button" class="btn-link" data-do="clear-filters">' + esc(STRINGS.showAll) + '</button></div>';
-    }
-    return h;
+    return h + '<a class="tchip" href="#map">' + esc(STRINGS.chip.map) + '</a></div>';
   }
   // B: the routes on Courses, right under the tiles: the open ones only (a closed route's tile already says so); shown
   // ones filled with ×, hidden ones dashed with +. The same state as "What are you looking at?" on Results (S.where,
@@ -3251,7 +3329,15 @@
         if (hl && lines.indexOf(hl) < 0) lines.push(hl);
       });
       lines.forEach(function (l, i) { if (l.fig) lines[i] = remindHTML(figLine(figs[l.fig]), figs[l.fig][0].sc, false); });
+      const cant = r.pw.filter(function (x) { return cantWork(x.wid, x.sc); });
+      cant.forEach(function (x) {
+        const c = cardsIn(x.wid, x.sc.id)[0], it = c && c.best && c.best.r && reasonItems(c.best.r).filter(function (i) { return i.met === null; })[0];
+        const t = it && esc(it.text.replace(/ Check with your teacher\.$/, ''));
+        if (t && lines.indexOf(t) < 0) lines.push(t);
+      });
       if (r.check) lines.push(esc(STRINGS.checkWith(r.check) + '.'));
+      if (cant.length) lines.push(esc(STRINGS.cantList(r.labels.join(', '))));
+      if (r.pw.some(function (x) { return x.sc.id === 'ppfp'; })) lines.push(esc(STRINGS.pfpFloors));
       if (!lines.length) lines.push(esc(STRINGS.canApply + '.'));  // never an empty pop-over: the route's state words
       return lines;
     }
@@ -3543,6 +3629,8 @@
     if (cell === '—' && st.state !== 'yes' && st.state !== 'no') st = openToStatus(path, i, p);
     return st;
   }
+  // MOE: "Students who do not offer sufficient G2 or G3 subjects to compute the eligibility criteria ... may consult their schools"
+  function fifthFew() { return resultsIn() && S.rows.filter(function (r) { return !r.skip && r.name && (r.level === 'G2' || r.level === 'G3'); }).length < 5; }
   function fifthYear() {
     const s = R && R.byId['5TH-YEAR(2027)'];
     const e = s && (s.eligibility || []).filter(function (x) { return x.id === 'eligible'; })[0];
@@ -3575,11 +3663,12 @@
     return out;
   }
   function anotherText(k) {
+    if (k === 'fifth' && fifthYear() === false) return ['Your school can tell you if a 5th year is open to you, because you have too few G2 or G3 subjects to work out the criteria.'];
     if (k === 'fifth') return [fifthYear() === true ? 'Your results meet the criteria for a 5th year in secondary school. Your school handles the application.'
       : 'You may meet the criteria for a 5th year in secondary school. Check with your school.'];
     if (k === 'jie_o') {
       const b5 = R && R.byId['B5(2026)'];
-      return ANOTHER.jie_o.text.concat([STRINGS.jieONoCut]).concat(b5 ? [scoreSentence(b5)] : []);
+      return ANOTHER.jie_o.text.concat([STRINGS.jieONeeds, STRINGS.jieONoCut]).concat(b5 ? [scoreSentence(b5)] : []);
     }
     return ANOTHER[k].text;
   }
@@ -3678,6 +3767,22 @@
     const to = ROUTE.name === 'course' ? ORIGIN : 'courses';
     return '<a class="back" href="#' + to + '" data-do="back">' + esc(STRINGS.back[to] || STRINGS.back.courses) + '</a>';
   }
+  /* A job this course can lead to, on YouTube: a link, never an embed, so nothing loads until a tap. Clear matches only (data/day_in_life_map.json); no match, no row. */
+  function videosHTML(c) {
+    const stem = c.kind === 'ite' ? c.title.replace(/^Higher Nitec in | \(\d Years\)$/g, '') : '';
+    const list = (PAGE.videos || []).filter(function (v) { return c.kind === 'ite' ? v.ite.indexOf(stem) >= 0 : (c.kind === 'course' || c.kind === 'pfp') && c.codes.some(function (x) { return v.poly.indexOf(x) >= 0; }); });
+    if (!list.length) return '';
+    return '<section class="vids"><h3 class="vids-h">' + esc(STRINGS.dayInLife) + '</h3><div class="vids-list" data-wc="0">' + list.map(function (v) { return ext('https://www.youtube.com/watch?v=' + v.id, v.job); }).join('') + '</div><p class="hint" data-wc="0">' + esc(PAGE.videos_by) + '</p></section>';
+  }
+  // Details: the tag, one line in words on where the student's top interest sits (a JC: one per stream), and a grey line where the engine is unsure
+  function fitDetailHTML(c) {
+    const top = S.riasec[0];
+    const lines = c.kind === 'jc' ? (c.streams || []).filter(streamLetters).map(function (s) { return STRINGS.fitLine(streamLabel(s), streamLetters(s), top); })
+      : c.letters ? [STRINGS.fitLine(STRINGS.thisCourse, c.letters, top)] : [];
+    if (!lines.length) return '';
+    return (c.fits ? '<p class="det-fit">' + fitTag(c.may) + '</p>' : '') + lines.map(function (l) { return '<p class="det-why">' + esc(l) + '</p>'; }).join('') +
+      (c.unsure ? '<p class="hint">' + esc(STRINGS.fitRough) + '</p>' : '');
+  }
   function detailHTML(c) {
     if (!c) return backHTML() + '<div class="card empty"><p>' + esc(STRINGS.notInList) + '</p></div>';
     const b = c.best;
@@ -3686,8 +3791,7 @@
     // K10: the field line without RIASEC letters
     const fieldLine = c.kind === 'jc' ? (c.streams || []).map(streamLabel).join(' · ') : c.kind === 'pfp' ? (c.fields || []).join(' · ') : c.field || '';
     if (fieldLine) h += '<p class="det-field">' + esc(fieldLine) + '</p>';
-    if (c.fits) h += '<p class="det-fit"><span class="tag tag-fit">' + esc(STRINGS.fits) + '</span> <button type="button" class="info" data-do="fit-info" aria-expanded="' + !!KEEP.fitInfo + '" aria-label="About this tag">ⓘ</button></p>' +
-      (KEEP.fitInfo ? '<p class="hint">' + esc(STRINGS.fitInfo) + '</p>' : '');
+    if (S.riasec.length) h += fitDetailHTML(c);
     h += starBtn(c, true) + '</div>';
     if (c.kind === 'arts') return h + artsDetailHTML(c) + '</article>';
     // the badge, large, and the number line (D10: no sentence under it)
@@ -3717,7 +3821,7 @@
           ext(d.url, d.name) + (d.progress && d.progress.length ? '<p class="muted">' + esc(d.progress.join(' ')) + '</p>' : '') + '</li>';
       }).join('') + '</ul></details>';
     }
-    h += exerciseDates(c);
+    h += videosHTML(c) + exerciseDates(c);
     if (b.r) h += cfNotesHTML(b.r);
     if (c.kind === 'ite' && c.offers.length > 1) h += '<p class="links">' + c.offers.map(function (o) { return ext(o.r.moe_url, o.r.institution.replace(/^ITE College /, '') + ' · ' + STRINGS.cf); }).join('') + '</p>';
     else h += linksFor(b.r);
@@ -3898,7 +4002,7 @@
     const items = compareItems(true);
     const wide = isWide();
     let h = '<div class="panel-head"><h2 class="panel-h" tabindex="-1">' + esc(wide ? STRINGS.starredHeadWide : STRINGS.starredHead) + ' ' + countHTML(items.length) + '</h2>' +
-      (items.length ? '<button type="button" class="btn btn-share" data-do="share">' + esc(STRINGS.share(items.length)) + '</button>' : '') + '</div>';
+      (items.length && wide ? shareBtnHTML() : '') + '</div>';
     if (!items.length) return h + '<p class="empty-note">' + esc(STRINGS.starredEmpty) + '</p>';
     const stateLines = function (f) { return f.state.map(function (t) { return '<p class="hint st-line">' + esc(t) + '</p>'; }).join(''); };
     if (wide) {
@@ -3936,6 +4040,7 @@
       itemNotes([x]).forEach(function (n) { lines.push(n); });
       if (x.link) lines.push(x.link);
     });
+    if ((PAGE.ops || {}).url) lines.push('', 'Student Pathway Atlas: ' + PAGE.ops.url);  // the online page's address
     return lines.join('\n');
   }
   function offerText(o, c) {
@@ -3993,7 +4098,7 @@
     if (!monthOnly) {
       const pre = basis === 'inferred' ? STRINGS.expected + ' ' : '', post = tentative && basis !== 'inferred' ? ' (' + STRINGS.tentative + ')' : '';
       when = pre + whenText(start, end) + post;
-      whenY = pre + whenText(start, end) + ' ' + month.slice(0, 4) + post;
+      whenY = pre + whenText(start, end) + ' ' + (end || start).slice(0, 4) + post;  // the end's year: LASALLE runs 1 Oct to 25 Jan
     }
     return { a: a, title: a.title, fam: a.fam, start: start, end: end, basis: basis, monthOnly: monthOnly, when: when, whenY: whenY, month: month, year: month.slice(0, 4),
       sort: placeDate, closed: closed, src: src, apply: !!a.apply };
@@ -4098,9 +4203,8 @@
   function mapHTML() {
     const counts = {}, present = {};
     const cards = (CARDS || []).filter(function (c) { return inScope(c.where) && matchesFilters(c, true); });
-    cards.forEach(function (c) {
-      c.insts.forEach(function (inst) { present[inst] = true; if (canApply(c)) counts[inst] = (counts[inst] || 0) + 1; });
-    });
+    cards.forEach(function (c) { c.insts.forEach(function (inst) { present[inst] = true; }); });
+    listCards(true).forEach(function (c) { if (canApply(c)) c.insts.forEach(function (inst) { counts[inst] = (counts[inst] || 0) + 1; }); });
     const dots = INSTITUTIONS.filter(function (i) { return present[i.name]; });
     const rings = (PAGE.coast && PAGE.coast.rings) || [];
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -4148,8 +4252,7 @@
       return '';
     }).join('');
     const types = ['JC', 'MI', 'Poly', 'ITE'].filter(function (t) { return dots.some(function (d) { return d.type === t; }); });
-    const visible = (CARDS || []).filter(function (c) { return inScope(c.where) && matchesFilters(c) && c.state !== 'no'; }).length;
-    let h = backHTML() + '<div class="panel-head"><h2 class="panel-h">' + esc(STRINGS.mapHead) + '</h2><a class="btn" href="#courses" data-do="back">' + esc(STRINGS.mapList(visible)) + '</a></div>';
+    let h = backHTML() + '<div class="panel-head"><h2 class="panel-h">' + esc(STRINGS.mapHead) + '</h2></div>';
     h += '<svg class="map" viewBox="' + vb + '" role="group" aria-label="Map of Singapore with the institutions"><g class="land">' + land + '</g>' + marks + '<g class="lbls" aria-hidden="true">' + labels + '</g></svg>';
     h += '<ul class="legend">' + types.map(function (t) { return '<li><span class="lg lg-' + t.toLowerCase() + '"></span>' + esc(STRINGS.mapType[t]) + '</li>'; }).join('') +
       (browse ? '' : '<li><span class="lg lg-hollow"></span>' + esc(STRINGS.mapNone) + '</li>') + '</ul>';
@@ -4169,8 +4272,9 @@
     return '<section class="ab"><h3 class="fs-h">' + esc(STRINGS.aboutApp) + '</h3><p>' + esc(STRINGS.aboutAppLine) + '</p></section>' +
       '<section class="ab about"><h3 class="fs-h">' + esc(STRINGS.about) + '</h3>' + STRINGS.aboutParas.map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('') + (S.year === 2027 ? '<p>' + esc(STRINGS.aboutEst) + '</p>' : '') +
       '<blockquote>' + esc(STRINGS.caution) + '</blockquote><p class="src">' + ext(STRINGS.cautionUrl, STRINGS.cautionSrc) + '</p>' +
-      STRINGS.aboutLines.slice(1).map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('') + moeLinkHTML() + '</section>' +
+      '<p>' + esc(STRINGS.aboutOfficial) + '</p>' + moeLinkHTML() + '</section>' +
       '<section class="ab"><h3 class="fs-h">' + esc(STRINGS.aboutResults) + '</h3><p>' + esc(STRINGS.saved) + '.</p></section>' +
+      (OP.env ? '<section class="ab">' + OP.recHTML() + STRINGS.collected.map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('') + '<div class="gr-acts">' + OP.bugAct() + '</div></section>' : '') +
       '<section class="ab"><h3 class="fs-h">' + esc(STRINGS.sources) + '</h3><p class="src">' + esc(STRINGS.aboutSources) + '</p></section>';
   }
 
@@ -4192,7 +4296,7 @@
     const t = sel && $(sel);
     if (t) t.focus();
   }
-  function instSheetHTML() {
+  function instOptionsHTML() {
     const cards = [];
     scope().forEach(function (w) { shownCards(w).forEach(function (c) { if (matchesFilters(c, true)) cards.push(c); }); });
     const by = {};
@@ -4203,12 +4307,14 @@
     liveInsts().forEach(function (i) { let found = false; Object.keys(by).forEach(function (t) { if (by[t][i] != null) found = true; }); if (!found) { by.Other = by.Other || {}; by.Other[i] = 0; } });
     // a group whose every count is 0 comes last; a 0 is not printed (its name stays grey, a screen reader still hears it)
     const live = function (t) { return Object.keys(by[t]).some(function (i) { return by[t][i] > 0; }); };
-    return ['JC', 'MI', 'Polytechnic', 'ITE', 'Arts', 'Other'].filter(function (t) { return by[t]; }).sort(function (a, b) { return S.year === 2026 ? live(b) - live(a) : 0; }).map(function (t) {
-      return '<fieldset class="inst-group"><legend>' + esc(STRINGS.instTypes[t] || t) + '</legend><ul class="checklist">' + Object.keys(by[t]).sort(function (a, b) { return (by[t][b] > 0) - (by[t][a] > 0) || (a < b ? -1 : 1); }).map(function (i) {
+    const none = !liveInsts().length;
+    return '<ul class="checklist"><li><input type="checkbox" id="inst-all" data-change="inst-all"' + (none ? ' checked' : '') + '><label for="inst-all">' + esc(STRINGS.showAll) + '</label></li></ul>' + ['JC', 'MI', 'Polytechnic', 'ITE', 'Arts', 'Other'].filter(function (t) { return by[t]; }).sort(function (a, b) { return S.year === 2026 ? live(b) - live(a) : 0; }).map(function (t) {
+      const n = Object.keys(by[t]).filter(function (i) { return S.insts.indexOf(i) >= 0; }).length, k = 'opt-inst-' + t;
+      return '<details class="fold-s inst-group" data-keep="' + esc(k) + '"' + (KEEP[k] || n ? ' open' : '') + '><summary>' + esc(STRINGS.instTypes[t] || t) + (n ? ' <span class="count">' + n + '</span>' : '') + '</summary><ul class="checklist">' + Object.keys(by[t]).sort(function (a, b) { return (by[t][b] > 0) - (by[t][a] > 0) || (a < b ? -1 : 1); }).map(function (i) {
         const id = 'inst-' + hash36(i);
         return '<li' + (S.year === 2026 && !by[t][i] ? ' class="zero"' : '') + '><input type="checkbox" id="' + id + '" data-change="inst" data-v="' + esc(i) + '"' + (S.insts.indexOf(i) >= 0 ? ' checked' : '') + '><label for="' + id + '"><span data-wc="0">' + esc(i) + '</span>' +
           (S.year === 2027 ? '' : ' <span class="count' + (by[t][i] ? '' : ' sr-only') + '">' + by[t][i] + '</span>') + '</label></li>';
-      }).join('') + '</ul></fieldset>';
+      }).join('') + '</ul></details>';
     }).join('');
   }
   function renderSheet(focusFirst) {
@@ -4216,13 +4322,12 @@
     if (!el) return;
     const k = SHEET.kind;
     document.body.classList.toggle('sheet-on', !!k);
-    if (!k) { el.hidden = true; el.innerHTML = ''; el.className = 'sheet'; el.removeAttribute('style'); scrim.hidden = true; return; }
+    if (!k) { el.hidden = true; el.innerHTML = ''; el.className = 'sheet'; el.removeAttribute('style'); scrim.hidden = true; clearKb(); return; }
     let head = '', body = '';
-    if (k === 'field') { head = STRINGS.sheetFields; body = fieldChecklistHTML(); }
-    // one Filter sheet with the Field and Institution pickers; D: About
-    else if (k === 'filter') { head = STRINGS.chip.filter; body = (fieldList().length ? '<h3 class="fs-h">' + esc(STRINGS.chip.field) + '</h3>' + fieldChecklistHTML() : '') + '<h3 class="fs-h">' + esc(STRINGS.chip.inst) + '</h3>' + instSheetHTML(); }
-    else if (k === 'about') { head = STRINGS.aboutHead; body = aboutHTML(); }
-    else if (k === 'inst') { head = STRINGS.sheetInst; body = instSheetHTML(); }
+    // D: About, and the two sheets it shares its look with
+    if (k === 'about') { head = STRINGS.aboutHead; body = aboutHTML(); }
+    else if (k === 'riasec') { head = STRINGS.riasecHead; body = riasecHTML(); }
+    else if (k === 'bug') { head = OP.STRINGS.bug; body = OP.bugHTML(); }
     else if (k === 'secinst') {
       const wid = SHEET.scope, all = instsOf(wid), mine = instFilterFor(wid), st = jcSortStream();
       const cut = function (i) {
@@ -4245,12 +4350,11 @@
         return '<li><button type="button" class="radio" data-do="sort-pick" data-v="' + o + '" aria-pressed="' + (sortKey() === o) + '"><span class="rd" aria-hidden="true"></span>' + esc(STRINGS.sorts[o]) + '</button></li>';
       }).join('') + '</ul>';
     } else if (k === 'share') {
-      head = STRINGS.share(starredCards().length);
+      head = STRINGS.shareSheet;
       const text = shareText();
       body = '<textarea id="share-text" class="share-text" rows="8" readonly data-wc="0">' + esc(text) + '</textarea><div class="sheet-acts">' +
-        '<button type="button" class="btn-primary" data-do="copy">' + esc(STRINGS.copy) + '</button>' +
-        '<a class="btn" href="https://wa.me/?text=' + encodeURIComponent(text) + '" target="_blank" rel="noopener">' + esc(STRINGS.whatsapp) + '</a>' +
-        (navigator.share ? '<button type="button" class="btn" data-do="os-share">' + esc(STRINGS.osShare) + '</button>' : '') + '</div>';
+        '<a class="btn-primary btn-share" href="https://wa.me/?text=' + encodeURIComponent(text) + '" target="_blank" rel="noopener">' + ico('share') + '<span>' + esc(STRINGS.whatsapp) + '</span></a>' +
+        '<button type="button" class="btn btn-share" data-do="copy">' + ico('copy') + '<span>' + esc(STRINGS.copy) + '</span></button></div>';
     } else if (k === 'confirm') {
       head = STRINGS.restart;
       body = '<p>' + esc(STRINGS.confirm(S.stars.length)) + '</p><div class="sheet-acts"><button type="button" class="btn-primary btn-danger" data-do="confirm-clear">' + esc(STRINGS.clear) +
@@ -4264,8 +4368,8 @@
           '<p class="links">' + ext(ANOTHER[key].link.url, ANOTHER[key].link.label) + '</p></section>';
       }).join('');
     }
-    const pop = isWide() && (k === 'field' || k === 'inst' || k === 'sort' || k === 'secinst' || k === 'filter');
-    const done = (k === 'field' || k === 'inst' || k === 'route' || k === 'secinst' || k === 'filter') ? '<div class="sheet-acts"><button type="button" class="btn-primary" data-do="sheet-close">' + esc(STRINGS.done) + '</button></div>' : '';
+    const pop = isWide() && (k === 'sort' || k === 'secinst');
+    const done = (k === 'route' || k === 'secinst') ? '<div class="sheet-acts"><button type="button" class="btn-primary" data-do="sheet-close">' + esc(STRINGS.done) + '</button></div>' : '';
     el.className = 'sheet' + (pop ? ' pop' : '') + ' sheet-' + k;
     el.innerHTML = '<div class="sheet-in" role="' + (k === 'confirm' ? 'alertdialog' : 'dialog') + '" aria-modal="true" aria-labelledby="sheet-h"><div class="sheet-head"><h2 id="sheet-h">' + esc(head) + '</h2>' +
       '<button type="button" class="btn-x" data-do="sheet-close" aria-label="' + esc(STRINGS.close) + '">×</button></div><div class="sheet-body">' + body + '</div>' + done + '</div>';
@@ -4287,7 +4391,7 @@
         else { el.style.top = 'auto'; el.style.bottom = Math.round(vh - r.top + gap) + 'px'; el.style.maxHeight = Math.round(Math.min(above, vh * 0.6)) + 'px'; }
       }
     }
-    if (focusFirst) { const f = k === 'confirm' ? el.querySelector('.sheet-acts [data-do="sheet-close"]') : k === 'about' ? el.querySelector('.sheet-head .btn-x') : el.querySelector('input:not([readonly]),button:not(.btn-x),a'); if (f) f.focus(); }  // never a textarea: on a phone, focusing it zooms the page
+    if (focusFirst) { const f = k === 'confirm' ? el.querySelector('.sheet-acts [data-do="sheet-close"]') : k === 'about' ? el.querySelector('.sheet-head .btn-x') : el.querySelector('input:not([readonly]),textarea:not([readonly]),button:not(.btn-x),a'); if (f) f.focus(); }  // never a textarea: on a phone, focusing it zooms the page
   }
 
   /* ================================================================================================ K9: motion
@@ -4404,12 +4508,19 @@
   let ORIGIN = 'courses';  // where Details was opened from (D25)
   const NAV = [];
   let LIST_Y = 0;
+  let OP_STARTED = false;
+  // Between screens: 100 ms from faint, never from blank, so a tap feels answered at once
+  function fadeIn() {
+    if (ROUTE.name === 'course' && !isWide()) return;  // Details has its own slide
+    const el = $(ROUTE.name === 'input' ? '#s-input' : ROUTE.name === 'options' ? '#s-options' : ROUTE.name === 'courses' && !isWide() ? '#s-list' : '#s-pane');
+    if (el) anim(el, [{ opacity: 0.4 }, { opacity: 1 }], MOTION.d1);
+  }
   function routeHash(r) { return r.name === 'course' ? 'course-' + r.id : r.name; }
   function parseHash(h) {
     const s = String(h || '').replace(/^#/, '');
     const m = /^course-([a-z0-9]+)$/.exec(s);
     if (m) return { name: 'course', id: m[1] };
-    if (['input', 'courses', 'starred', 'dates', 'map'].indexOf(s) >= 0) return { name: s, id: '' };
+    if (['input', 'options', 'courses', 'starred', 'dates', 'map'].indexOf(s) >= 0) return { name: s, id: '' };
     return { name: 'input', id: '' };
   }
   function go(hash, replace) {
@@ -4429,14 +4540,18 @@
       if (scr) { changed(); history.replaceState(null, '', '#' + scr); }
     }
     let next = parseHash(location.hash);
-    if (next.name !== 'input' && !S.year) { history.replaceState(null, '', '#input'); next = { name: 'input', id: '' }; }
+    if (next.name !== 'input' && !S.year) { history.replaceState(null, '', '#input'); next = { name: 'input', id: '' }; if (OP_STARTED && !(UNDO && $('#toast').classList.contains('on'))) toast(STRINGS.pickYear); }
     const h = '#' + routeHash(next);
     if (NAV.length >= 2 && NAV[NAV.length - 2] === h) NAV.pop(); else if (NAV[NAV.length - 1] !== h) NAV.push(h);
     if (!isWide() && prev.name === 'courses' && next.name !== 'courses') LIST_Y = window.scrollY;
-    if (SHEET.kind) { SHEET.kind = ''; renderSheet(); }
+    if (SHEET.kind) { SHEET.kind = ''; SHEET.pushed = false; renderSheet(); }
     if (next.name === 'course' && prev.name !== 'course') ORIGIN = prev.name === 'starred' ? 'starred' : 'courses';
+    if (next.name === 'course') OP.rec('open', next.id, seen(next.id));  // before the list changes, so it can say where the course sat
+    if (next.name !== prev.name || !OP_STARTED) OP.rec('s', next.name);
     ROUTE = next;
     render();
+    if (next.name === 'courses') { recSnap(); OP.flush(); }
+    if (prev.name !== next.name && OP_STARTED) fadeIn();
     if (!isWide()) {
       if (next.name === 'courses' && LIST_ROUTES.indexOf(prev.name) > 0) window.scrollTo(0, LIST_Y);
       else if (next.name !== prev.name || next.id !== prev.id) window.scrollTo(0, 0);
@@ -4485,21 +4600,23 @@
   // screen readers (the word says it)
   const TAB_ICON = {
     input: '<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>',
+    options: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/>',
     courses: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.6" cy="6.5" r="1.3"/><circle cx="4.6" cy="12" r="1.3"/><circle cx="4.6" cy="17.5" r="1.3"/>',
     starred: '<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
     dates: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'
   };
-  // D25: four sections, a tab bar at the bottom of a phone and in the header of a laptop
+  // D25: five sections, a tab bar at the bottom of a phone and in the header of a laptop
   function renderHeader() {
     const el = $('#tabs');
     if (!el) return;
-    const cur = ROUTE.name === 'input' ? 'input' : ROUTE.name === 'starred' ? 'starred' : ROUTE.name === 'dates' ? 'dates' :
+    const cur = ROUTE.name === 'input' ? 'input' : ROUTE.name === 'options' ? 'options' : ROUTE.name === 'starred' ? 'starred' : ROUTE.name === 'dates' ? 'dates' :
       ROUTE.name === 'course' && ORIGIN === 'starred' ? 'starred' : 'courses';
-    const n = S.year ? starredCards().length : 0;
-    el.innerHTML = ['input', 'courses', 'starred', 'dates'].map(function (k) {
+    // Options: the courses left, the same number as its button, only while options are on
+    const onN = { starred: S.year ? starredCards().length : 0, options: S.year && R && !R.error && optionsOn() ? listCount() : 0 };
+    el.innerHTML = ['input', 'options', 'courses', 'starred', 'dates'].map(function (k) {
       return '<a class="tab" href="#' + k + '"' + (k === cur ? ' aria-current="page"' : '') + '><svg class="tab-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
         TAB_ICON[k] + '</svg><span>' + esc(STRINGS.tabs[k]) + '</span>' +
-        (k === 'starred' && n ? '<span class="tab-n">' + n + '</span>' : '') + '</a>';
+        (onN[k] ? '<span class="tab-n">' + onN[k] + '</span>' : '') + '</a>';
     }).join('');
     // on a laptop the toast sits in the header between the last tab and "Start again" / the i, never over a tab
     if (isWide()) { const t = el.lastElementChild; document.documentElement.style.setProperty('--toast-l', (t ? Math.ceil(t.getBoundingClientRect().right + gapPx()) : 0) + 'px'); }
@@ -4550,6 +4667,7 @@
     keepFocus(function () {
       document.body.dataset.route = ROUTE.name;
       if (ROUTE.name === 'input') { renderInput(); document.documentElement.style.setProperty('--sticky-h', '0px'); }
+      else if (ROUTE.name === 'options') { renderOptions(); document.documentElement.style.setProperty('--sticky-h', '0px'); }
       else { renderList(); renderPane(); }
       renderHeader(); renderBar();
       if (SHEET.kind) renderSheet();
@@ -4561,8 +4679,7 @@
     const at = routeHash(ROUTE);
     if (PANE_AT && PANE_AT !== 'input' && at !== 'input' && at !== PANE_AT) {
       const pane = $('#s-pane');
-      if (isWide()) anim(pane, [{ opacity: 0 }, { opacity: 1 }], MOTION.d2);
-      else if (ROUTE.name === 'course') anim(pane, [{ transform: 'translateX(100%)' }, { transform: 'none' }], MOTION.flip);
+      if (!isWide() && ROUTE.name === 'course') anim(pane, [{ transform: 'translateX(100%)' }, { transform: 'none' }], MOTION.flip);
     }
     PANE_AT = at;
     save();
@@ -4636,6 +4753,7 @@
   // D2.2: the level of most subjects sets every row; the cores follow the level (N(T) has no Humanities row)
   function setLevel(lv) {
     if (S.level === lv) return;
+    const graded = function () { return S.rows.filter(function (r) { return r.name && (r.grade || r.mark); }).length; }, had = graded(), before = had ? snapshot() : null;
     S.level = lv;
     const old = S.rows;
     const cores = coreRows();
@@ -4645,6 +4763,7 @@
       // D19: a picked subject that does not exist at the new level is picked again
       if (c.pick && o.name && pickOptions(PICKS[c.pick], lv).indexOf(o.name) >= 0) c.name = o.name;
       if (!c.pick && o.name !== c.name) return;
+      if (c.pick && !c.name) return;
       c.grade = o.grade; c.mark = o.mark; c.skip = o.skip;
       c.level = c.name ? levelFor(c.name, lv) : lv;
       keepOrClear(c);
@@ -4658,6 +4777,7 @@
     S.rows = cores.concat(added);
     LVL_OPEN = '';
     update(true);
+    if (graded() < had) { UNDO = before; toast(STRINGS.levelCleared, { do: 'undo', label: STRINGS.undo }); }
   }
   function toggleStar(key, viaSwipe) {
     UNDO = { stars: S.stars.slice() };
@@ -4673,15 +4793,6 @@
   function foldTo(btn, kind, map, v) {
     if (map[v]) { const nx = btn.nextElementSibling; closeThen(nx && /\b(cards|jct)\b/.test(nx.className) ? nx : null, function () { map[v] = false; update(false); }); return; }
     map[v] = true; JUST_OPENED = kind + '|' + v; update(false);
-  }
-  function share() {
-    const text = shareText();
-    const fallback = function () { openSheet('share', $('[data-do="share"]')); };
-    const laptop = isWide() || !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
-    if (laptop || !navigator.share) { fallback(); return; }
-    try {
-      navigator.share({ title: STRINGS.shareHead.replace(/:$/, ''), text: text }).catch(function () { fallback(); });
-    } catch (e) { fallback(); }
   }
   function copyShare() {
     const ta = $('#share-text');
@@ -4710,7 +4821,7 @@
     R = null; CARDS = null; DIRTY = true; OPEN_ROW = ''; LVL_OPEN = ''; CARD_OPEN = false; ADDING = false;
     addOpen = false; addQuery = ''; schoolQuery = ''; pasteOpen = true; pasteReadBack = ''; pasteUnread = [];
     changed();
-    SHEET.kind = ''; renderSheet();
+    SHEET.kind = ''; SHEET.pushed = false; renderSheet();
     go('input');
     render();
     const ta = $('#paste-text'); if (ta) ta.value = '';  // never focused by script: on a phone that zooms the page
@@ -4719,11 +4830,12 @@
   function clearAll() {
     UNDO = snapshot();
     S = defaultState(); R = null; CARDS = null; DIRTY = true; OPEN_ROW = ''; LVL_OPEN = ''; CARD_OPEN = false; ADDING = false; KEEP.about = false;
-    addOpen = false; addQuery = ''; schoolQuery = ''; pasteOpen = false; pasteReadBack = ''; pasteUnread = []; fieldsOpen = false;
+    addOpen = false; addQuery = ''; schoolQuery = ''; pasteOpen = false; pasteReadBack = ''; pasteUnread = [];
     try { localStorage.removeItem(STORE_KEY); } catch (e) { /* nothing stored */ }
-    SHEET.kind = ''; renderSheet();
+    SHEET.kind = ''; SHEET.pushed = false; renderSheet();
     go('input');
     render();
+    window.scrollTo(0, 0);  // the same screen, so go doesn't scroll: a phone left part-way down showed a blank page
     toast(STRINGS.cleared, { do: 'undo', label: STRINGS.undo });
   }
 
@@ -4731,8 +4843,11 @@
     const t = e.target.closest && e.target.closest('[data-do]');
     if (!t) {
       if (e.target.id === 'scrim') closeSheet();
+      const out = e.target.closest && e.target.closest('a[target="_blank"]');
+      if (out) { try { OP.rec('out', new URL(out.href).hostname); } catch (err) { /* a link that doesn't parse */ } }
       return;
     }
+    recTap(t.dataset.do, t);
     const act = t.dataset.do, v = t.dataset.v;
     TAP_SEL = /\b(chip|chip-any|seg-btn)\b/.test(t.className) ? selOf(t) : '';
     const r = t.dataset.row ? rowById(t.dataset.row) : null;
@@ -4815,7 +4930,7 @@
         const d = picksMade() ? null : defaultRoutes(), cur = d ? d.routes.slice() : S.where.filter(function (w) { return liveWheres().indexOf(w) >= 0; });
         S.where = act === 'route-add' ? cur.concat(cur.indexOf(v) < 0 ? [v] : []) : cur.filter(function (w) { return w !== v; });
         if (!S.where.length) return;
-        const fl = fieldList(); S.fields = S.fields.filter(function (f) { return fl.indexOf(f) >= 0; });
+        { const fl = fieldList(); S.fields = S.fields.filter(function (f) { return fl.indexOf(f) >= 0; }); }
         update(true); return;
       }
       case 'tile': {
@@ -4827,17 +4942,9 @@
       }
       case 'tile-close': { const w = t.closest('.tile-w'), tb = w && w.querySelector('.tile'); if (tb) { tb.setAttribute('aria-expanded', 'false'); tb.focus({ preventScroll: true }); } return; }
       case 'about-open': if (SHEET.kind === 'about') closeSheet(); else openSheet('about', t); return;
-      case 'where': {
-        const i = S.where.indexOf(v);
-        if (i >= 0) S.where.splice(i, 1); else S.where.push(v);
-        const fl = fieldList();
-        S.fields = S.fields.filter(function (f) { return fl.indexOf(f) >= 0; });
-        update(true); return;
-      }
       case 'school-pick': S.school = v; schoolQuery = ''; update(true); return;
       case 'school-clear': S.school = ''; schoolQuery = ''; update(true); { const i = $('#school'); if (i) i.focus(); } return;
       case 'lep': S.lep = v; update(true); return;
-      case 'fields-toggle': fieldsOpen = !fieldsOpen; update(false); return;
       case 'riasec': {
         const i = S.riasec.indexOf(v);
         if (i >= 0) S.riasec.splice(i, 1); else if (S.riasec.length < 3) S.riasec.push(v); else return;
@@ -4845,10 +4952,12 @@
       }
       case 'bands': KEEP.bands = !KEEP.bands; update(false); return;
       case 'about': KEEP.about = !KEEP.about; update(false); return;
-      case 'fit-info': KEEP.fitInfo = !KEEP.fitInfo; update(false); return;
-      case 'show': changed(); go('courses'); return;  // only after "Calculate my aggregates", every subject done
-      // a greyed route chip adds nothing; it says why, in place
-      case 'where-off': CHIP_WHY = CHIP_WHY === v ? '' : v; update(false); return;
+      case 'go-options': go('options'); return;  // only after "Calculate my aggregates", every subject done
+      case 'show': changed(); go('courses'); return;
+      case 'riasec-info': openSheet('riasec', t); return;
+      case 'bug-open': openSheet('bug', t); return;
+      case 'bug-send': OP.sendBug(t); return;
+      case 'rec-set': OP.setRec(v); return;
       case 'what-if': {
         const nm = nearMiss();
         if (!nm || !S.rows[nm.i]) return;
@@ -4865,7 +4974,6 @@
       case 'also-open': { const d = defaultRoutes(); if (d) S.where = d.routes.concat(d.hidden.map(function (x) { return x.wid; })).filter(function (w, i, a) { return a.indexOf(w) === i; }); update(true); return; }
       // the indicative tag's words, on tap (hover and keyboard focus show them through CSS)
       case 'ind': { e.preventDefault(); const open = t.getAttribute('aria-expanded') !== 'true'; $$('.ind[aria-expanded="true"]').forEach(function (x) { x.setAttribute('aria-expanded', 'false'); }); t.setAttribute('aria-expanded', String(open)); if (open) placeTip(t); return; }
-      case 'where-all': S.where = []; S.fields = S.fields.filter(function (f) { return fieldList().indexOf(f) >= 0; }); update(true); return;
       case 'add-where': if (S.where.indexOf(v) < 0) S.where.push(v); S.fold[v] = false; update(true); { const g = $('#g-' + v); if (g) { g.scrollIntoView({ block: 'start' }); g.focus({ preventScroll: true }); } } return;
       case 'path-go': {
         // B2: a row never changes what the student picked; it goes to its section, or offers to add the route
@@ -4884,25 +4992,19 @@
         S.fold[v] = false; JUST_OPENED = 'group|' + v; update(false); return; }
       case 'show-no': foldTo(t, 'show-no', S.showNo, v); return;
       case 'star': e.preventDefault(); toggleStar(t.dataset.key, false); return;
-      case 'share': share(); return;
+      case 'share': openSheet('share', t); return;
       case 'copy': copyShare(); return;
-      case 'os-share': try { navigator.share({ title: STRINGS.shareHead.replace(/:$/, ''), text: shareText() }).catch(function () {}); } catch (err) { /* the sheet stays */ } return;
       case 'jcsort': S.jcSort = v; STREAM_SAVED = v; try { localStorage.setItem(STREAM_KEY, v); } catch (e) { /* private window */ } update(false); return;
       case 'sheet-secinst': if (SHEET.kind === 'secinst' && SHEET.scope === v) closeSheet(); else openSheet('secinst', t); return;
       case 'secinst-all': S.insts = S.insts.filter(function (i) { return instsOf(v).indexOf(i) < 0; }); PICK_NONE[v] = false; update(false); return;
       case 'secinst-none': S.insts = S.insts.filter(function (i) { return instsOf(v).indexOf(i) < 0; }); PICK_NONE[v] = true; update(false); return;
       case 'show-long': foldTo(t, 'show-long', S.showMore, v); return;
-      case 'sheet-field': case 'sheet-inst': case 'sheet-sort': case 'sheet-filter': {
+      case 'sheet-sort': {
         const k = act.replace('sheet-', '');
         if (SHEET.kind === k) closeSheet(); else openSheet(k, t);
         return;
       }
-      case 'sort-pick': S.sort = v; SHEET.kind = ''; renderSheet(); update(false); return;
-      case 'unfilter':
-        if (t.dataset.k === 'field') S.fields = S.fields.filter(function (f) { return f !== v; });
-        else if (t.dataset.k === 'where') { S.where = S.where.filter(function (w) { return w !== v; }); const fl = fieldList(); S.fields = S.fields.filter(function (f) { return fl.indexOf(f) >= 0; }); }
-        else S.insts = S.insts.filter(function (i) { return i !== v; });
-        update(false); return;
+      case 'sort-pick': S.sort = v; SHEET.kind = ''; SHEET.pushed = false; renderSheet(); update(false); return;
       case 'sub': { const open = t.getAttribute('aria-expanded') === 'true'; S.subOpen[v] = !open; update(false); return; }
       case 'show-more': foldTo(t, 'show-more', S.showMore, v); return;
       case 'show-norange': foldTo(t, 'show-norange', S.showNoRange, v); return;
@@ -4917,7 +5019,6 @@
       case 'restart': openSheet('confirm', t); return;
       case 'confirm-clear': clearAll(); return;
       case 'next-student': nextStudent(); return;
-      case 'edit-paste': pasteOpen = true; CARD_OPEN = true; go('input'); return;  // the box shows, never focused by script
       case 'sheet-close': closeSheet(); return;
       case 'undo':
         if (UNDO) {
@@ -4932,11 +5033,15 @@
     const t = e.target;
     const d = t.dataset || {};
     if (d.change === 'pick') { const r = rowById(d.row); if (r && t.value) { r.name = t.value; r.level = levelFor(r.name, r.level || S.level); keepOrClear(r); r.skip = false; PICK_OPEN = ''; } update(true); }
+    else if (d.change === 'field-all') { S.fields = S.fields.filter(function (k) { return fieldRoute(k) !== d.w; }); OP.rec('field-all'); update(false); }
+    else if (d.change === 'inst-all') { const all = liveInsts(); S.insts = S.insts.filter(function (i) { return all.indexOf(i) < 0; }); OP.rec('inst-all'); update(false); }
     else if (d.change === 'field') {
+      OP.rec('field', fieldName(d.v));
       const i = S.fields.indexOf(d.v);
       if (t.checked && i < 0) S.fields.push(d.v); else if (!t.checked && i >= 0) S.fields.splice(i, 1);
       update(false);
     } else if (d.change === 'inst') {
+      OP.rec('inst', d.v);
       const i = S.insts.indexOf(d.v);
       if (t.checked && i < 0) S.insts.push(d.v); else if (!t.checked && i >= 0) S.insts.splice(i, 1);
       update(false);
@@ -4976,7 +5081,7 @@
         ensureR(); unpickShut();
         const html = summaryHTML('results');
         if (slot.innerHTML !== html) { holdFloor(); slot.innerHTML = html; tileMotion(); }
-        if (wc) { const w = whereCardHTML(); if (wc.outerHTML !== w) wc.outerHTML = w; }
+        if (wc) { const w = schoolCardHTML(); if (wc.outerHTML !== w) wc.outerHTML = w; }
       }, 300);
       return;
     }
@@ -4993,7 +5098,7 @@
     } else if (d.input === 'q') {
       S.q = t.value.trim();
       clearTimeout(qTimer);
-      qTimer = setTimeout(function () { render(); }, 200);
+      qTimer = setTimeout(function () { render(); if (S.q) OP.rec('search', listCount() ? 'hit' : 'none'); }, 200);
     }
   });
   // D3, a mark row is complete on Enter / Next or when focus leaves it with a valid mark; it then folds and the
@@ -5125,7 +5230,7 @@
   let WIDE = isWide();
   window.addEventListener('resize', function () {
     const w = isWide();
-    if (w !== WIDE) { WIDE = w; if (SHEET.kind) { SHEET.kind = ''; renderSheet(); } render(); }
+    if (w !== WIDE) { WIDE = w; if (SHEET.kind) { SHEET.kind = ''; SHEET.pushed = false; renderSheet(); } render(); }
   });
 
   /* ================================================================================================ demo results */
@@ -5144,6 +5249,7 @@
       ['Principles of Accounts', 'G3', 'B3'], ['Chinese', 'G1', 'D']] }
   };
   function applyDemo() {
+    if (OP.env === 'live') return '';
     const raw = String(location.hash || '').replace(/^#/, '');
     let id = '', screen = 'input';
     const plain = /^demo-([A-Za-z0-9]+?)(?:-(courses|dates|starred|map|input))?$/.exec(raw);
@@ -5179,7 +5285,8 @@
   selfCheck();
   if (!location.hash || location.hash === '#') history.replaceState(null, '', '#input');
   onRoute();
+  OP_STARTED = true; recSnap(); OP.askNumber(); OP.keepVisit();
   window.PSE_ATLAS = { version: APP_VERSION, name: APP_DISPLAY_NAME, state: function () { return S; }, result: function () { ensureR(); return R; },
     cards: function () { ensureR(); return CARDS; }, route: function () { return ROUTE; }, unmapped: function () { return UNMAPPED.slice(); },
-    missing: function () { return missingRows().length; }, estimate2028: estimate2028 };
+    missing: function () { return missingRows().length; }, estimate2028: estimate2028, summary: function () { ensureR(); return summaryHTML('results'); }, listCount: listCount };
 })();

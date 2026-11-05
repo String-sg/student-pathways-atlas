@@ -1,0 +1,4 @@
+# made by a rebuild or a test run
+__pycache__/
+app/dist/
+app/tools/_parity/

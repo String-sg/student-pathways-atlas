@@ -11,8 +11,11 @@ their options.
 
 ## Open it
 
-Download this folder and double-click `Student Pathway Atlas v0.14.4.html`. It needs no install, no server and no login, and it works offline.
-Nothing is sent anywhere: a student's entries stay in their own browser. It works on a phone and on a laptop.
+Download this folder and double-click `Student Pathway Atlas v0.19.html`. It needs no install, no server and no login, and it works offline.
+It works on a phone and on a laptop.
+
+This copy sends nothing anywhere: a student's entries stay in their own browser. The same page is online at
+https://pathway.dataiskoo.sg. There it collects analytics to help us improve the app, and a student can turn that off (`app/src/ops/`).
 
 ## What it covers
 
@@ -23,6 +26,10 @@ Nothing is sent anywhere: a student's entries stay in their own browser. It work
 - **Routes:** JC, MI, polytechnic, PFP, DPP, ITE (JAE, JIE and PSE 2028), NAFA and LASALLE, and the 5th year.
 - **Courses:** 414 courses from MOE CourseFinder, each with its 2026 net aggregate range. For 2027 SEC results, MOE has
   not published PSE 2028 ranges yet, so the page shows estimates worked out from the 2026 ranges, marked "Est.".
+- **Interests:** a student taps their three RIASEC letters from the MySkillsFuture quiz. Courses that often suit those
+  letters are tagged "Fits your interests", and their fields come first. Where we are less sure which interests a course
+  suits, the tag says "May fit your interests". Nothing is hidden.
+- **Jobs:** some courses link to videos of jobs they can lead to, from the National Youth Council's On My Way series.
 
 ## Sources and admissions year
 
@@ -31,14 +38,23 @@ Nothing is sent anywhere: a student's entries stay in their own browser. It work
 - Course list and 2026 ranges: MOE CourseFinder, downloaded on 17 Oct 2026 (`data/snapshots/2026-10-17/`).
 - Secondary schools and affiliations: MOE SchoolFinder (`data/schools/`).
 - Dates: MOE's press releases on school terms, and each exercise's own page (`data/calendar/`).
+- Republic Polytechnic's course pages have moved, and CourseFinder still has the old addresses.
+  `data/course_link_fixes.csv` gives the new ones.
+- Interest letters: each poly and ITE course has its own three letters, worked out from the jobs it leads to. The jobs
+  come from three lists: the jobs on its CourseFinder page, our own list, and a US list that links courses to jobs. Each
+  job's letters come from O*NET. The engine that does this is not in this folder, and
+  `data/taxonomy/riasec_courses.csv` holds its result. For a JC or MI stream, the letters are our own suggestion, from
+  Holland's descriptions of the six types (`data/taxonomy/riasec_fields.csv`).
+- Job videos: the National Youth Council's On My Way series on YouTube (`data/day_in_life_videos.json`). The page links
+  to them and does not embed them.
 
 ## How it was checked
 
 - 67 worked examples from MOE's own pages give the same aggregates. They quote MOE's text, so they are not in this
   folder; they could become shared scenarios, rewritten as made-up students.
 - 214 engine tests and 65 matcher tests on made-up students, worked out by hand from the rule text.
-- The Python engine and the JS engine (`pse_core.js`) agree on 2,700 random students (`app/tools/parity.py`).
-- `tests/qa_data.mjs` runs 69 checks of the built page in Chrome against the data and the engine.
+- The Python engine and the JS engine (`pse_core.js`) agree on 27,000 random students (`app/tools/parity.py`).
+- `tests/qa_data.mjs` runs 70 checks of the built page in Chrome against the data and the engine.
 
 ## Rebuild and test
 
@@ -117,6 +133,8 @@ When marks are typed instead of grades, the usual school mark bands turn them in
 - `matcher/requirements.json` ships ready. Rebuilding it (`python3 -m matcher build`) also reads MOE's aggregate-type PDF,
   which is not in this folder.
 - EMB1, an aggregate some schools compute, has no source page, so the engine keeps it as a stub.
+- The RIASEC engine that works out each course's letters is not in this folder, so `data/taxonomy/riasec_courses.csv`
+  can't be rebuilt from here.
 
 ## Made-up students to try
 
@@ -129,6 +147,12 @@ When marks are typed instead of grades, the usual school mark bands turn them in
 ## Licence
 
 The code is under the MIT licence (`LICENSE`). Course lists, ranges and dates belong to MOE and the institutions.
+
+This folder and the page include information from the O*NET 31.0 Database by the U.S. Department of Labor, Employment
+and Training Administration (USDOL/ETA). Used under the CC BY 4.0 license (https://creativecommons.org/licenses/by/4.0/).
+O*NET® is a trademark of USDOL/ETA. We have modified all or some of this information, matching Singapore job titles to
+O*NET occupations and combining their letters into course letters. USDOL/ETA has not approved, endorsed, or tested these
+modifications.
 
 ## Source pages
 

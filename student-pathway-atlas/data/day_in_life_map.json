@@ -1,0 +1,237 @@
+{
+  "about": "Which job in data/day_in_life_videos.json fits which course of this app. Clear matches only, judged from the job's name against the course's name and field; no video was watched. poly = MOE course codes (a PFP page takes these through its diplomas). ite = the course name without 'Higher Nitec in' and the years, so the 2-year and 3-year courses share a row. Common programmes get none: they lead to too many jobs. ITE courses get no Engineer, Auditor or Data Scientist video, and Law & Management no Lawyer video, because those jobs need a degree that the course alone doesn't give. Build stops if a job, code or name has gone.",
+  "jobs": {
+    "Public Relations Manager": {
+      "poly": [
+        "N67",
+        "R32",
+        "T40",
+        "C93",
+        "N88"
+      ]
+    },
+    "OBS Instructor": {
+      "poly": [
+        "R33"
+      ]
+    },
+    "UI/UX Designer": {
+      "poly": [
+        "C32",
+        "T35"
+      ]
+    },
+    "Architect": {
+      "poly": [
+        "C38",
+        "S66"
+      ]
+    },
+    "Civil Engineer": {
+      "poly": [
+        "S68"
+      ]
+    },
+    "Games Developer": {
+      "poly": [
+        "C70",
+        "T58",
+        "C29"
+      ],
+      "ite": [
+        "Immersive Applications & Game"
+      ]
+    },
+    "Social Media Strategist": {
+      "poly": [
+        "T67",
+        "N67",
+        "R32",
+        "C93",
+        "T40",
+        "R19"
+      ]
+    },
+    "Investment Banker": {
+      "poly": [
+        "C96",
+        "N53",
+        "S76"
+      ]
+    },
+    "Pastry Chef": {
+      "poly": [
+        "T18"
+      ],
+      "ite": [
+        "Pastry & Baking",
+        "Culinary Arts"
+      ]
+    },
+    "Producer": {
+      "poly": [
+        "T23",
+        "N82",
+        "N67",
+        "R32",
+        "R25"
+      ],
+      "ite": [
+        "Film & Video Production"
+      ]
+    },
+    "Electrical Engineer": {
+      "poly": [
+        "N43",
+        "R50",
+        "S99",
+        "T72"
+      ]
+    },
+    "Personal Trainer": {
+      "poly": [
+        "R26",
+        "R43",
+        "C81"
+      ]
+    },
+    "Auditor": {
+      "poly": [
+        "N51",
+        "S75",
+        "C98",
+        "T02"
+      ]
+    },
+    "Data Scientist": {
+      "poly": [
+        "T60",
+        "C43",
+        "N81",
+        "R13",
+        "S30",
+        "T69",
+        "C31"
+      ]
+    },
+    "Roadside Assistance Technician": {
+      "ite": [
+        "Automotive Engineering"
+      ]
+    },
+    "Journalist": {
+      "poly": [
+        "N67",
+        "R32",
+        "N88"
+      ]
+    },
+    "Pharmacist": {
+      "poly": [
+        "C65",
+        "N73",
+        "R22",
+        "T25"
+      ]
+    },
+    "Marketing Manager": {
+      "poly": [
+        "T67"
+      ]
+    },
+    "Process Engineer": {
+      "poly": [
+        "T33",
+        "N56",
+        "S70",
+        "C23"
+      ]
+    },
+    "Cyber Security Penetration Tester": {
+      "poly": [
+        "C54",
+        "N94",
+        "R55",
+        "S54",
+        "T62"
+      ],
+      "ite": [
+        "Cyber & Network Security"
+      ]
+    },
+    "Quality Engineer": {
+      "poly": [
+        "T43",
+        "R11"
+      ]
+    },
+    "Customer Care Supervisor": {
+      "ite": [
+        "Customer Experience"
+      ]
+    },
+    "SEO Specialist": {
+      "poly": [
+        "T67"
+      ]
+    },
+    "Port Operations Manager": {
+      "poly": [
+        "S74",
+        "R21",
+        "T07"
+      ],
+      "ite": [
+        "Logistics & Supply Chain Management"
+      ]
+    },
+    "Food Technologist": {
+      "poly": [
+        "S47",
+        "C69",
+        "T26"
+      ],
+      "ite": [
+        "Applied Food Science"
+      ]
+    },
+    "Sports Scientist": {
+      "poly": [
+        "R26",
+        "R43"
+      ]
+    },
+    "Makeup Artist": {
+      "ite": [
+        "Beauty & Wellness Management"
+      ]
+    },
+    "Radio DJ": {
+      "poly": [
+        "N67",
+        "R32"
+      ]
+    },
+    "Business Consultant": {
+      "poly": [
+        "R60",
+        "T10",
+        "N45",
+        "S71",
+        "C94"
+      ]
+    },
+    "Biomedical Engineer": {
+      "poly": [
+        "T38",
+        "C71",
+        "N60"
+      ]
+    },
+    "Curator": {
+      "poly": [
+        "N91"
+      ]
+    }
+  }
+}

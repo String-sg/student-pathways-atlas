@@ -1,0 +1,63 @@
+{
+"about": "On My Way: A Day in the Life, 40 videos by NYC Singapore (National Youth Council) on YouTube. Read 2 Nov 2026. Link out, never embed. types/courses = clear matches for the University Admissions Atlas; an empty list = no clear match to a university course. except = a course its type would otherwise match, that the job doesn't fit. 'id' opens as https://www.youtube.com/watch?v=<id>",
+"playlist": "https://www.youtube.com/playlist?list=PLN5TkIcY0FRsmlA7tjKW62kIwiYN2IQPq",
+"videos": [
+{"id": "q6Yt8MeGRwA", "job": "Public Relations Manager", "date": "2020-12-02", "types": ["Communication and Media"]},
+{"id": "xOPlalbQ_UE", "job": "OBS Instructor", "date": "2020-11-30", "types": []},
+{"id": "3mA-ZtaDQs8", "job": "UI/UX Designer", "date": "2020-11-30", "types": [], "courses": [
+"SIT-user-experience-and-game-design-digipen",
+"NTU-art-design-media"
+]},
+{"id": "MDeKMy5q_cc", "job": "Architect", "date": "2020-11-17", "types": ["Architecture"]},
+{"id": "mX_CPOdsx4w", "job": "Civil Engineer", "date": "2020-11-18", "types": ["Civil Engineering"]},
+{"id": "_KHtdRIAd1Q", "job": "Games Developer", "date": "2020-11-15", "types": ["Games and Interactive Media"]},
+{"id": "rSxy_eLVZSQ", "job": "Social Media Strategist", "date": "2020-11-05", "types": [
+"Communication and Media",
+"Marketing"
+]},
+{"id": "RXQ42K3Mqm8", "job": "Investment Banker", "date": "2020-11-05", "types": ["Finance"], "except": ["SIT-applied-computing-fintech"]},
+{"id": "xqv9ddqB4lQ", "job": "Art Therapist", "date": "2020-12-14", "types": []},
+{"id": "HsrG3INWx_g", "job": "Surgeon", "date": "2020-12-14", "types": ["Medicine"]},
+{"id": "VRi079dw4O4", "job": "Lawyer", "date": "2021-10-03", "types": ["Law"], "except": ["SMU-bachelor-of-science-computing-law"]},
+{"id": "quyw48HYGT4", "job": "Pastry Chef", "date": "2021-10-03", "types": [], "courses": ["SIT-food-business-management-baking-and-pastry-arts"]},
+{"id": "Z932_-Mb2Tc", "job": "Producer", "date": "2021-11-01", "types": ["Communication and Media"]},
+{"id": "EHnLNWPfb0E", "job": "Electrical Engineer", "date": "2021-11-01", "types": ["Electrical and Electronic Engineering"]},
+{"id": "Fji_2JRHC-Y", "job": "Research Assistant", "date": "2021-11-01", "types": []},
+{"id": "-agz4ZwxUis", "job": "Personal Trainer", "date": "2021-11-18", "types": ["Sport Science"]},
+{"id": "ICY_rHKha1c", "job": "Auditor", "date": "2021-11-18", "types": ["Accountancy"]},
+{"id": "Bj3fQ0btzz4", "job": "Data Scientist", "date": "2021-11-18", "types": [
+"Artificial Intelligence and Data Science",
+"Business Analytics",
+"Mathematics and Statistics"
+]},
+{"id": "6U6qmZvE2Zg", "job": "Roadside Assistance Technician", "date": "2021-11-18", "types": []},
+{"id": "PiIidPG5adg", "job": "Journalist", "date": "2021-11-18", "types": ["Communication and Media"]},
+{"id": "2mK6bl7D3v8", "job": "Pharmacist", "date": "2021-11-18", "types": ["Pharmacy"]},
+{"id": "AVi3K5qBG_k", "job": "Marketing Manager", "date": "2021-12-05", "types": ["Marketing"]},
+{"id": "4EbPykh_bmo", "job": "Process Engineer", "date": "2021-12-05", "types": ["Chemical Engineering"]},
+{"id": "2j0ppjezjY0", "job": "Cyber Security Penetration Tester", "date": "2021-12-27", "types": ["Information Security"]},
+{"id": "xbuozcUPx4c", "job": "Quality Engineer", "date": "2021-12-27", "types": ["Industrial and Systems Engineering"]},
+{"id": "VblFsX8N7DQ", "job": "Customer Care Supervisor", "date": "2021-12-27", "types": []},
+{"id": "M5djpQw6MLg", "job": "SEO Specialist", "date": "2021-12-27", "types": ["Marketing"]},
+{"id": "uELED8k07Ww", "job": "Programme Coordinator", "date": "2022-02-06", "types": []},
+{"id": "kNNg-z5buws", "job": "Port Operations Manager", "date": "2022-02-06", "types": [], "courses": [
+"NTU-maritime-studies",
+"SUSS-bachelor-of-science-in-supply-chain-management",
+"SIT-digital-supply-chain"
+]},
+{"id": "n4lI-BSNmqs", "job": "Food Technologist", "date": "2022-02-06", "types": ["Food Science and Technology"]},
+{"id": "S1t_VU28URQ", "job": "Sports Scientist", "date": "2023-01-05", "types": ["Sport Science"]},
+{"id": "ICHb9ZcZOPI", "job": "Makeup Artist", "date": "2023-01-05", "types": []},
+{"id": "0QgRUm6vPRk", "job": "Radio DJ", "date": "2023-01-05", "types": []},
+{"id": "xtHlrqyWtbc", "job": "Librarian", "date": "2023-01-05", "types": []},
+{"id": "-_T8XDyhA_A", "job": "Business Consultant", "date": "2023-01-05", "types": ["Business and Management"]},
+{"id": "MJeNmRAJN-Q", "job": "Quantitative Trader", "date": "2023-01-05", "types": [
+"Finance",
+"Mathematics and Statistics"
+], "except": ["SIT-applied-computing-fintech"]},
+{"id": "JJcv14lUU4U", "job": "Senior Airport Emergency Officer", "date": "2023-01-06", "types": ["Public Safety"]},
+{"id": "oMtn1XXyDyA", "job": "Biomedical Engineer", "date": "2023-01-06", "types": ["Biomedical Engineering and Bioengineering"]},
+{"id": "F2aX4vjQg-s", "job": "Curator", "date": "2023-01-06", "types": [], "courses": ["NTU-art-design-media"]},
+{"id": "LL58tNfaBBA", "job": "e-Sports Coach", "date": "2023-01-06", "types": []}
+]
+}

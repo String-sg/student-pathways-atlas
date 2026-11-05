@@ -1,3 +1,4 @@
+html{touch-action:manipulation}
 /* app.css - Rosetta: Student Pathway Atlas, the student page.  Phone first: one screen at a time; from 1024 px the list
    and the details sit side by side, each pane its own scroll area, and the page itself does not scroll (D1, N5).
    Every colour, size and duration is a token (tokens_from_atlas.css + app_tokens.css); none is typed here. */
@@ -29,7 +30,7 @@ summary::-webkit-details-marker{display:none}
 .brand-sub{color:var(--ink-2);font-weight:var(--fw-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand-version{flex:none;font-size:var(--fs-1);line-height:var(--lh-1);background:var(--pill-bg);color:var(--pill-ink);padding:2px 7px;border-radius:var(--r-pill);font-weight:var(--fw-2)}
 /* D25: the four sections; a tab bar at the bottom of a phone, in the header on a laptop */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:var(--z-popover);display:grid;grid-template-columns:repeat(4,1fr);height:calc(var(--h-tabs) + env(safe-area-inset-bottom));
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:var(--z-popover);display:grid;grid-template-columns:repeat(5,1fr);height:calc(var(--h-tabs) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);background:var(--glass-bar);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-top:1px solid var(--rule)}
 .tab{position:relative;display:flex;align-items:center;justify-content:center;gap:var(--sp-1);min-height:44px;color:var(--ink-2);font-weight:var(--fw-2);text-decoration:none}
 .tab[aria-current="page"]{color:var(--ink)}
@@ -41,13 +42,12 @@ summary::-webkit-details-marker{display:none}
 /* ---------------------------------------------------------------- screens (D1): one at a time on a phone */
 .layout{max-width:var(--w-page);margin:0 auto;padding:var(--sp-3) var(--sp-4) var(--sp-6)}
 .screen{display:none;min-width:0}
-body[data-route="input"] .s-input{display:block}
+body[data-route="input"] #s-input,body[data-route="options"] #s-options{display:block}
 body[data-route="courses"] .s-list,body[data-route="sel"] .s-list{display:block}
 body[data-route="course"] .s-pane,body[data-route="starred"] .s-pane,body[data-route="dates"] .s-pane,body[data-route="map"] .s-pane{display:block}
 .s-input{max-width:var(--w-input);margin:0 auto}
 body.has-bar .layout{padding-bottom:calc(var(--h-barbtm) + var(--sp-6))}
 .nojs{border-color:var(--warn-line);background:var(--warn-soft)}
-body:has(#nojs) #restart{display:none}
 
 /* ---------------------------------------------------------------- cards, headings, text */
 .card{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:var(--sp-4);margin-bottom:var(--sp-3);box-shadow:var(--e1)}
@@ -186,7 +186,7 @@ table.bands td{padding:2px var(--sp-3) 2px 0;border-top:1px solid var(--rule)}
 .s1 .foot{margin-top:var(--sp-5)}
 
 /* the sticky bottom bar (D2.9, D4) */
-.bar{position:fixed;left:0;right:0;bottom:calc(var(--h-tabs) + env(safe-area-inset-bottom));z-index:var(--z-popover);padding:var(--sp-3) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom));
+.bar{position:fixed;left:0;right:0;bottom:calc(var(--h-tabs) + env(safe-area-inset-bottom));z-index:var(--z-popover);padding:var(--sp-3) var(--sp-4);
   background:var(--glass-bar);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-top:1px solid var(--rule)}
 .bar[hidden]{display:none}
 .bar>*{max-width:var(--w-input);margin-left:auto;margin-right:auto}
@@ -292,6 +292,8 @@ table.bands td{padding:2px var(--sp-3) 2px 0;border-top:1px solid var(--rule)}
 
 .tag{display:inline-flex;align-items:center;gap:var(--sp-1);min-height:24px;font-size:var(--fs-1);line-height:var(--lh-1);color:var(--ink-2)}
 .tag-fit{padding:1px var(--sp-2);border-radius:var(--r-pill);background:var(--fit-bg);color:var(--fit-ink);font-weight:var(--fw-2)}
+/* the engine is unsure of the course's letters: the same pill, outlined and dashed */
+.tag-may{padding:0 var(--sp-2);border:1px dashed var(--fit-ink);border-radius:var(--r-pill);color:var(--fit-ink);font-weight:var(--fw-2)}
 .st-mark,.rs-mark{flex:none;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-size:var(--fs-1);line-height:1;font-weight:var(--fw-2);background:var(--sunk);color:var(--ink-2)}
 .tag.st-yes .st-mark,.rs-yes>.rs-mark,.rs-mark.st-yes{color:var(--accent);background:var(--accent-soft)}
 .tag.st-cond .st-mark,.rs-cond>.rs-mark,.rs-mark.st-cond,.path.st-cond .st-mark{background:var(--st-cond-soft);color:var(--st-cond)}
@@ -306,6 +308,8 @@ table.bands td{padding:2px var(--sp-3) 2px 0;border-top:1px solid var(--rule)}
 .det-inst{color:var(--ink-2)}
 .det-field{font-size:var(--fs-1);line-height:var(--lh-1);color:var(--ink-3)}
 .det-fit{display:flex;align-items:center;gap:var(--sp-1)}
+.det-why{font-size:var(--fs-1);line-height:var(--lh-1)}
+.det-head .hint{margin-top:0}
 .det-head .star-big{margin-top:var(--sp-2)}
 .det-offers{display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-5);padding:var(--sp-3) 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:var(--sp-3)}
 .det-offer{display:flex;flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
@@ -429,7 +433,7 @@ svg.map{display:block;width:100%;height:auto;background:var(--surface-2);border:
 .scrim{position:fixed;inset:0;z-index:var(--z-modal);background:var(--scrim)}
 .scrim[hidden]{display:none}
 
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:calc(var(--z-modal) + 1);max-height:82dvh;overflow:auto;background:var(--surface);border-radius:var(--r) var(--r) 0 0;
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:calc(var(--z-modal) + 1);max-height:82vh;max-height:82dvh;overflow:auto;background:var(--surface);border-radius:var(--r) var(--r) 0 0;
   box-shadow:var(--e2);padding:var(--sp-2) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom))}
 .sheet[hidden]{display:none}
 .sheet.pop{bottom:auto;right:auto;max-height:60vh;border-radius:var(--r);border:1px solid var(--rule);padding-bottom:var(--sp-3)}
@@ -455,11 +459,11 @@ svg.map{display:block;width:100%;height:auto;background:var(--surface-2);border:
 .about p{margin-top:var(--sp-2)}
 /* , the toast sits in the header bar, over the name and left of "Start again", so it never covers a
    control: on a phone across the brand, on a laptop right of the tabs. ONE rule for its place (, B P-13). */
-.toast{position:fixed;top:calc(env(safe-area-inset-top, 0px) + (var(--h-top) - 44px) / 2);left:var(--sp-3);right:calc(var(--sp-3) + 7.5rem + 44px);bottom:auto;transform:translate(0,-8px);z-index:var(--z-toast);
+.toast{position:fixed;top:calc(env(safe-area-inset-top, 0px) + (var(--h-top) - 44px) / 2);left:var(--sp-3);right:calc(var(--sp-3) + 44px);bottom:auto;transform:translate(0,-8px);z-index:var(--z-toast);
   display:flex;align-items:center;gap:var(--sp-2);min-height:44px;padding:0 var(--sp-3);border-radius:var(--r-sm);background:var(--ink);color:var(--ground);box-shadow:var(--e2);
   font-size:var(--fs-1);line-height:var(--lh-1);opacity:0;pointer-events:none;transition:opacity var(--dur-2) var(--ease-enter),transform var(--dur-2) var(--ease-enter)}
 .toast.on{opacity:1;transform:translate(0,0);pointer-events:auto}
-@media (min-width:1024px){ .toast{left:var(--toast-l, auto);right:calc(var(--sp-5) + 7.5rem + 44px);font-size:inherit;line-height:inherit} }
+@media (min-width:1024px){ .toast{left:var(--toast-l, auto);right:calc(var(--sp-5) + 44px + var(--sp-2));font-size:inherit;line-height:inherit} }
 .toast .btn-link{color:var(--ground);font-weight:var(--fw-2);min-width:44px;justify-content:center}
 
 /* ---------------------------------------------------------------- wider phones */
@@ -483,12 +487,12 @@ svg.map{display:block;width:100%;height:auto;background:var(--surface-2);border:
   .bar{bottom:0}
   .back{display:none}
   .chip{min-height:40px}
-  body:not([data-route="input"]){overflow:hidden}
-  body:not([data-route="input"]) .layout{display:grid;grid-template-columns:var(--w-listpane) minmax(0,1fr);gap:0;max-width:none;padding:0;
-    height:calc(100dvh - var(--h-top) - env(safe-area-inset-top, 0px))}
-  body:not([data-route="input"]) .s-list,body:not([data-route="input"]) .s-pane{display:block;height:100%;overflow:auto;overscroll-behavior:contain;padding:var(--sp-4) var(--sp-5) var(--sp-6)}
-  body:not([data-route="input"]) .s-list{border-right:1px solid var(--rule);background:var(--ground)}
-  body:not([data-route="input"]) .s-pane{background:var(--surface-2)}
+  body:not(:is([data-route="input"],[data-route="options"])){overflow:hidden}
+  body:not(:is([data-route="input"],[data-route="options"])) .layout{display:grid;grid-template-columns:var(--w-listpane) minmax(0,1fr);gap:0;max-width:none;padding:0;
+    height:calc(100vh - var(--h-top) - env(safe-area-inset-top, 0px));height:calc(100dvh - var(--h-top) - env(safe-area-inset-top, 0px))}
+  body:not(:is([data-route="input"],[data-route="options"])) .s-list,body:not(:is([data-route="input"],[data-route="options"])) .s-pane{display:block;height:100%;overflow:auto;overscroll-behavior:contain;padding:var(--sp-4) var(--sp-5) var(--sp-6)}
+  body:not(:is([data-route="input"],[data-route="options"])) .s-list{border-right:1px solid var(--rule);background:var(--ground)}
+  body:not(:is([data-route="input"],[data-route="options"])) .s-pane{background:var(--surface-2)}
   .layout .s-input{padding-top:var(--sp-3)}
   /* the card as one aligned row: name · institution · badge · star */
   .cc{grid-template-columns:minmax(0,1fr) var(--w-side) 44px;grid-template-areas:"main side star";align-items:center;padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3)}
@@ -569,7 +573,7 @@ table.cmp td{overflow-wrap:anywhere}
 .jct-div{margin:var(--sp-1) 0}
 /* K5: each Where section has a band that sticks while it scrolls: the name, the count, the key number, the choices (K6) */
 .g-band{position:sticky;top:calc(var(--h-top) + env(safe-area-inset-top, 0px));z-index:2;padding:var(--sp-1);background:var(--sunk);border-radius:var(--r)}
-@media (min-width:1024px){ body:not([data-route="input"]) .g-band{top:calc(var(--sp-4) * -1)} }
+@media (min-width:1024px){ body:not(:is([data-route="input"],[data-route="options"])) .g-band{top:calc(var(--sp-4) * -1)} }
 .g-band .group-head{border:0;background:none;padding-left:var(--sp-2)}
 @media (hover:hover){.g-band .group-head:hover{background:var(--hover)}}
 .g-title{display:flex;align-items:center;gap:var(--sp-3);min-height:44px;padding:0 var(--sp-2);font-size:var(--fs-3);line-height:var(--lh-3);font-weight:var(--fw-2)}
@@ -629,7 +633,7 @@ table.cmp td{overflow-wrap:anywhere}
 /* on a phone only the heading and the aggregate line stick; on a laptop the pickers stick under them */
 .g-tools{padding:var(--sp-2) var(--sp-1) 0}
 @media (min-width:1024px){
-  body:not([data-route="input"]) .g-tools{position:sticky;top:calc(var(--sp-4) * -1 + var(--band-h, 0px));z-index:2;background:var(--ground);padding-bottom:var(--sp-1)}
+  body:not(:is([data-route="input"],[data-route="options"])) .g-tools{position:sticky;top:calc(var(--sp-4) * -1 + var(--band-h, 0px));z-index:2;background:var(--ground);padding-bottom:var(--sp-1)}
 }
 /* a dashed box means a fold; a route offer is a quiet link row with › */
 .another{border:0;border-radius:var(--r-sm);background:none;color:var(--accent);font-weight:var(--fw-2);padding:0 var(--sp-1);justify-content:flex-start;text-align:left}
@@ -661,7 +665,7 @@ input::placeholder,textarea::placeholder{color:var(--ink-2);opacity:1}
 .cc-best{font-size:var(--fs-1);line-height:var(--lh-1);color:var(--ink-3);margin-top:2px}
 /* a row scrolled into view is never behind the sticky section header */
 html{scroll-padding-top:calc(var(--h-top) + var(--sticky-h, 0px) + var(--sp-2))}
-@media (min-width:1024px){ html{scroll-padding-top:0} body:not([data-route="input"]) .s-list{scroll-padding-top:calc(var(--sticky-h, 0px) + var(--sp-2))} }
+@media (min-width:1024px){ html{scroll-padding-top:0} body:not(:is([data-route="input"],[data-route="options"])) .s-list{scroll-padding-top:calc(var(--sticky-h, 0px) + var(--sp-2))} }
 /* the band sits above its own stuck pickers on a laptop */
 .g-band{z-index:3}
 /* a Humanities chip keeps its label on one line */
@@ -795,7 +799,7 @@ table.cmp td.cmp-link .ext::after{content:none}
 
 /* ================================================================ one step at a time */
 /* the page never moves under the finger by itself: scroll anchoring is off on Results (one scroll rule, app.js revealDown) */
-html:has(body[data-route="input"]){overflow-anchor:none}
+html:has(body:is([data-route="input"],[data-route="options"])){overflow-anchor:none}
 /* A4: after the core subjects, the CCA and the two buttons side by side */
 .step-end{margin-top:var(--sp-4)}
 .step-acts{display:flex;gap:var(--sp-2);margin-top:var(--sp-4)}
@@ -834,8 +838,8 @@ html:has(body[data-route="input"]){overflow-anchor:none}
 .tbar .tchip{padding:0 var(--sp-2);font-size:var(--fs-1)}
 .g-band{top:calc(var(--h-top) + env(safe-area-inset-top, 0px) + var(--tbar-h, 0px))}
 @media (min-width:1024px){
-  body:not([data-route="input"]) .tbar{top:calc(var(--sp-4) * -1)}
-  body:not([data-route="input"]) .g-band{top:calc(var(--sp-4) * -1 + var(--tbar-h, 0px))}
+  body:not(:is([data-route="input"],[data-route="options"])) .tbar{top:calc(var(--sp-4) * -1)}
+  body:not(:is([data-route="input"],[data-route="options"])) .g-band{top:calc(var(--sp-4) * -1 + var(--tbar-h, 0px))}
 }
 /* B: the routes under the tiles: shown ones filled with ×, hidden ones dashed with + */
 .rchips{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-1) var(--sp-2);margin:0 0 var(--sp-3)}
@@ -856,8 +860,8 @@ span.rchip{cursor:default}
 .tile-tip .tip-x{position:absolute;top:0;right:0;color:var(--ground)}
 .tile-tip b{font-weight:var(--fw-3)}
 /* D: About, behind an "i" in the top bar */
-.topbar .top-i{margin-left:0;min-width:44px;justify-content:center;padding:0}
-.top-i-c{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1.5px solid currentColor;border-radius:50%;font-weight:var(--fw-3);font-style:italic}
+.topbar .top-i{margin-left:auto;min-width:44px;justify-content:center;padding:0}
+.top-i-c{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .sheet-about .ab+.ab{margin-top:var(--sp-4)}
 .fs-h{margin:var(--sp-3) 0 var(--sp-1);font-size:var(--fs-2);line-height:var(--lh-2);font-weight:var(--fw-3)}
 .sheet-filter .fs-h:first-child,.sheet-about .ab:first-child .fs-h{margin-top:0}
@@ -908,7 +912,7 @@ span.rchip{cursor:default}
    card and never make the page or a pane wider (check_v12 measures each pane). Decoration only.
    Results: on the page's background, hugging the column (at most --w-input wide) */
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-repeat:no-repeat}
-body[data-route="input"]::before{background-image:
+body:is([data-route="input"],[data-route="options"])::before{background-image:
   radial-gradient(circle at min(calc(100% - 4px), calc(50% + var(--w-input) / 2 + 12px)) 208px,var(--deco-a)),
   radial-gradient(circle at max(4px, calc(50% - var(--w-input) / 2 - 12px)) 430px,var(--deco-b))}
 /* an icon on each tab: over the word on a phone, beside it on a laptop; the open tab's icon is drawn bolder */
@@ -928,12 +932,54 @@ body[data-route="input"]::before{background-image:
    get the two shapes near the top, behind the tiles or the page's heading, and they scroll away with the page, so the course
    list below stays plain. On a phone they are on the page's background; on a laptop each pane scrolls on its own, so the list
    pane carries the coral one on its left and the details pane the lilac one on its right */
-body:not([data-route="input"])::before{background-image:
+body:not(:is([data-route="input"],[data-route="options"]))::before{background-image:
   radial-gradient(circle at calc(100% - 4px) var(--deco-ya, 208px),var(--deco-a)),radial-gradient(circle at 4px var(--deco-yb, 170px),var(--deco-b))}
 /* Dates on a phone: the key under the heading sits on the bare background, so the shapes go lower, behind the first month */
 @media (max-width:1023px){ body[data-route="dates"]{--deco-ya:300px;--deco-yb:262px} }
 @media (min-width:1024px){
-  body:not([data-route="input"]) .s-list,body:not([data-route="input"]) .s-pane{background-repeat:no-repeat;background-attachment:scroll}
-  body:not([data-route="input"]) .s-list{background-image:radial-gradient(circle at 4px 170px,var(--deco-b))}
-  body:not([data-route="input"]) .s-pane{background-image:radial-gradient(circle at calc(100% - 4px) 208px,var(--deco-a))}
+  body:not(:is([data-route="input"],[data-route="options"])) .s-list,body:not(:is([data-route="input"],[data-route="options"])) .s-pane{background-repeat:no-repeat;background-attachment:scroll}
+  body:not(:is([data-route="input"],[data-route="options"])) .s-list{background-image:radial-gradient(circle at 4px 170px,var(--deco-b))}
+  body:not(:is([data-route="input"],[data-route="options"])) .s-pane{background-image:radial-gradient(circle at calc(100% - 4px) 208px,var(--deco-a))}
+}
+
+/* the parts this page shares with the University Admissions Atlas */
+.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.act{position:relative;display:inline-flex;align-items:center;gap:var(--sp-1);min-height:32px;padding:0 var(--sp-3);border:0;border-radius:var(--r-pill);background:var(--sel-soft);color:var(--ink);font:inherit;font-size:var(--fs-1);font-weight:var(--fw-2);cursor:pointer}
+.act::after{content:"";position:absolute;inset:-6px 0}
+.act:has(.i:first-child){padding-left:var(--sp-2)}
+.act .i{width:16px;height:16px}
+@media (hover:hover){.act:hover{background:var(--press)}}
+.act:active{transform:scale(.96);background:var(--press)}
+.uinp{width:100%;min-height:44px;font-size:16px;background:var(--surface);color:var(--ink);border:1px solid var(--outline);border-radius:var(--r-sm);padding:0 var(--sp-2);min-width:0}
+.uerr{color:var(--err);font-weight:var(--fw-2);font-size:var(--fs-1);line-height:var(--lh-1);margin-top:var(--sp-2)}
+.ptop{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);min-height:40px}
+.uagain{display:flex;margin-top:var(--sp-3)}
+.opt-h{display:flex;align-items:center;gap:var(--sp-1)}
+.opt-h .info .i{width:22px;height:22px}
+.gr-acts{margin-top:var(--sp-3)}
+.inst-group summary .count{margin-left:var(--sp-1)}
+.bar .ufoot{width:100%}
+.sheet-riasec .sheet-body p+p{margin-top:var(--sp-2)}
+.rchip:not(.on){background:var(--surface)}
+@media (min-width:1024px){.tabs{border-top:0}}
+/* Share carries a symbol, in the bar and the share sheet */
+.btn-share{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);text-decoration:none}
+.panel-head .btn-share{width:auto}
+/* A day in the life, on a course page */
+.vids{margin-top:var(--sp-4)}
+.vids-h{margin:0 0 var(--sp-1);font-size:var(--fs-2);line-height:var(--lh-2);font-weight:var(--fw-3)}
+.vids-list{display:flex;flex-wrap:wrap;gap:0 var(--sp-4)}
+.vids-list .ext{min-height:44px;display:inline-flex;align-items:center}
+.vids{margin-bottom:var(--sp-2)}
+/* the JC table keeps its column names in view; browsers without color-mix or dvh (iOS below 16.2 / 15.4) get solid colours */
+.jct-h{position:sticky;top:calc(var(--h-top) + env(safe-area-inset-top, 0px) + var(--tbar-h, 0px) + var(--band-h, 0px));z-index:2;background:var(--ground)}
+.cca-miss{margin-top:var(--sp-2)}
+@supports not (color:color-mix(in srgb,red,blue)){:root{--glass:var(--surface);--glass-bar:var(--surface);--edge:var(--rule);--sel-soft:var(--sunk);--star-soft:var(--sunk)}}
+.jct{display:contents}
+.jct>.cc.jct-r,.jct>.jct-grp{margin-top:var(--sp-1)}
+.jct.jct-ib{display:flex;margin-top:var(--sp-3)}
+.jct.jct-ib>.cc.jct-r,.jct.jct-ib>.jct-grp{margin-top:0}
+@media (min-width:1024px){
+  body:not(:is([data-route="input"],[data-route="options"])) .jct-h{top:calc(var(--sp-4) * -1 + var(--tbar-h, 0px) + var(--band-h, 0px))}
+  .bar{padding-bottom:calc(var(--sp-3) + env(safe-area-inset-bottom))}
 }

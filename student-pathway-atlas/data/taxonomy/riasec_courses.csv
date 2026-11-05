@@ -1,0 +1,378 @@
+key,letters,certainty,engine_id
+ITE College Central|FPACC,CEI,less,I-higher-nitec-in-accounting-2-years
+ITE College Central|FPBNS,CES,sure,I-higher-nitec-in-business-administration-2-years
+ITE College Central|FPBSE,ECS,sure,I-higher-nitec-in-event-management-2-years
+ITE College Central|FPECE,RCI,sure,I-higher-nitec-in-electronics-engineering-2-years
+ITE College Central|FPIAD,ICA,sure,I-higher-nitec-in-it-applications-development-2-years
+ITE College Central|FPIAG,ICR,less,I-higher-nitec-in-immersive-applications-game-2-years
+ITE College Central|FPISN,CRI,unsure,I-higher-nitec-in-it-systems-networks-2-years
+ITE College Central|FPMCE,RCI,sure,I-higher-nitec-in-mechatronics-engineering-2-years
+ITE College Central|FPMEC,RCI,sure,I-higher-nitec-in-mechanical-engineering-2-years
+ITE College Central|FPNST,CIR,sure,I-higher-nitec-in-cyber-network-security-2-years
+ITE College Central|HF3AC,CEI,less,I-higher-nitec-in-accounting-3-years
+ITE College Central|HF3AE,RCI,sure,I-higher-nitec-in-aerospace-engineering-3-years
+ITE College Central|HF3AI,ICR,less,I-higher-nitec-in-ai-applications-3-years
+ITE College Central|HF3BA,CES,sure,I-higher-nitec-in-business-administration-3-years
+ITE College Central|HF3CD,ACR,unsure,I-higher-nitec-in-communication-design-3-years
+ITE College Central|HF3CN,CIR,sure,I-higher-nitec-in-cyber-network-security-3-years
+ITE College Central|HF3EC,RCI,sure,I-higher-nitec-in-electronics-engineering-3-years
+ITE College Central|HF3EV,ECS,sure,I-higher-nitec-in-event-management-3-years
+ITE College Central|HF3FV,RCA,less,I-higher-nitec-in-film-video-production-3-years
+ITE College Central|HF3IA,ICA,sure,I-higher-nitec-in-it-applications-development-3-years
+ITE College Central|HF3ID,ARE,less,I-higher-nitec-in-interior-product-design-3-years
+ITE College Central|HF3IG,ICR,less,I-higher-nitec-in-immersive-applications-game-3-years
+ITE College Central|HF3IS,CRI,unsure,I-higher-nitec-in-it-systems-networks-3-years
+ITE College Central|HF3MC,RCI,sure,I-higher-nitec-in-mechatronics-engineering-3-years
+ITE College Central|HF3ME,RCI,sure,I-higher-nitec-in-mechanical-engineering-3-years
+ITE College Central|HF3MF,RCI,less,I-higher-nitec-in-advanced-manufacturing-3-years
+ITE College Central|HF3MR,RCE,less,I-higher-nitec-in-marine-offshore-engineering-3-years
+ITE College Central|HF3PS,CES,less,I-higher-nitec-in-passenger-services-3-years
+ITE College Central|HF3RB,ECS,less,I-higher-nitec-in-retail-online-business-3-years
+ITE College Central|HF3SM,SER,unsure,I-higher-nitec-in-sport-management-3-years
+ITE College Central|HF3TT,RAC,unsure,I-higher-nitec-in-technical-theatre-production-3-years
+ITE College Central|HF3VM,ERA,unsure,I-higher-nitec-in-visual-merchandising-3-years
+ITE College Central|V11,RCI,sure,I-higher-nitec-in-electronics-engineering-2-years
+ITE College Central|V12,SER,unsure,I-higher-nitec-in-sport-management-2-years
+ITE College Central|V13,RCI,sure,I-higher-nitec-in-mechatronics-engineering-2-years
+ITE College Central|V14,RCI,less,I-higher-nitec-in-advanced-manufacturing-2-years
+ITE College Central|V15,RCI,sure,I-higher-nitec-in-aerospace-engineering-2-years
+ITE College Central|V16,ICR,less,I-higher-nitec-in-ai-applications-2-years
+ITE College Central|V17,ICR,less,I-higher-nitec-in-immersive-applications-game-2-years
+ITE College Central|V21,RCI,sure,I-higher-nitec-in-mechanical-engineering-2-years
+ITE College Central|V22,CIR,sure,I-higher-nitec-in-cyber-network-security-2-years
+ITE College Central|V26,CRI,unsure,I-higher-nitec-in-it-systems-networks-2-years
+ITE College Central|V39,CEI,less,I-higher-nitec-in-accounting-2-years
+ITE College Central|V40,ECS,sure,I-higher-nitec-in-event-management-2-years
+ITE College Central|V42,SAC,sure,I-higher-nitec-in-early-childhood-education-2-years
+ITE College Central|V43,RCE,less,I-higher-nitec-in-marine-offshore-engineering-2-years
+ITE College Central|V55,ERA,unsure,I-higher-nitec-in-visual-merchandising-2-years
+ITE College Central|V61,ICA,sure,I-higher-nitec-in-it-applications-development-2-years
+ITE College Central|V66,ECS,less,I-higher-nitec-in-retail-online-business-2-years
+ITE College Central|V82,CES,less,I-higher-nitec-in-passenger-services-2-years
+ITE College Central|V91,CES,sure,I-higher-nitec-in-business-administration-2-years
+ITE College Central|V93,RCA,less,I-higher-nitec-in-film-video-production-2-years
+ITE College Central|V95,ACR,unsure,I-higher-nitec-in-communication-design-2-years
+ITE College Central|V97,RAC,unsure,I-higher-nitec-in-technical-theatre-production-2-years
+ITE College Central|V99,ARE,less,I-higher-nitec-in-interior-product-design-2-years
+ITE College East|FPACC,CEI,less,I-higher-nitec-in-accounting-2-years
+ITE College East|FPBIS,CIR,less,I-higher-nitec-in-business-information-systems-2-years
+ITE College East|FPBNS,CES,sure,I-higher-nitec-in-business-administration-2-years
+ITE College East|FPCHT,RCI,unsure,I-higher-nitec-in-bio-chemical-technology-2-years
+ITE College East|FPCSE,RCI,less,I-higher-nitec-in-civil-structural-engineering-design-2-years
+ITE College East|FPECE,RCI,sure,I-higher-nitec-in-electronics-engineering-2-years
+ITE College East|FPELE,RCI,sure,I-higher-nitec-in-electrical-engineering-2-years
+ITE College East|FPIAD,ICA,sure,I-higher-nitec-in-it-applications-development-2-years
+ITE College East|FPISN,CRI,unsure,I-higher-nitec-in-it-systems-networks-2-years
+ITE College East|FPLIT,CEI,less,I-higher-nitec-in-logistics-supply-chain-management-2-years
+ITE College East|FPMEC,RCI,sure,I-higher-nitec-in-mechanical-engineering-2-years
+ITE College East|FPNST,CIR,sure,I-higher-nitec-in-cyber-network-security-2-years
+ITE College East|HF3AC,CEI,less,I-higher-nitec-in-accounting-3-years
+ITE College East|HF3AR,RCA,sure,I-higher-nitec-in-architectural-technology-3-years
+ITE College East|HF3BA,CES,sure,I-higher-nitec-in-business-administration-3-years
+ITE College East|HF3BC,RCI,unsure,I-higher-nitec-in-bio-chemical-technology-3-years
+ITE College East|HF3BI,CIR,less,I-higher-nitec-in-business-information-systems-3-years
+ITE College East|HF3BW,RSC,less,I-higher-nitec-in-beauty-wellness-management-3-years
+ITE College East|HF3CN,CIR,sure,I-higher-nitec-in-cyber-network-security-3-years
+ITE College East|HF3CP,RCI,sure,I-higher-nitec-in-chemical-process-technology-3-years
+ITE College East|HF3CS,RCI,less,I-higher-nitec-in-civil-structural-engineering-design-3-years
+ITE College East|HF3EC,RCI,sure,I-higher-nitec-in-electronics-engineering-3-years
+ITE College East|HF3EE,RCI,sure,I-higher-nitec-in-electrical-engineering-3-years
+ITE College East|HF3FM,RCE,less,I-higher-nitec-in-facilities-management-engineering-3-years
+ITE College East|HF3FS,RCI,less,I-higher-nitec-in-applied-food-science-3-years
+ITE College East|HF3HS,RCS,sure,I-higher-nitec-in-hairdressing-salon-management-3-years
+ITE College East|HF3IA,ICA,sure,I-higher-nitec-in-it-applications-development-3-years
+ITE College East|HF3IS,CRI,unsure,I-higher-nitec-in-it-systems-networks-3-years
+ITE College East|HF3LD,RCE,sure,I-higher-nitec-in-landscape-management-design-3-years
+ITE College East|HF3LG,CEI,less,I-higher-nitec-in-logistics-supply-chain-management-3-years
+ITE College East|HF3MD,RCI,sure,I-higher-nitec-in-integrated-mechanical-electrical-design-3-years
+ITE College East|HF3ME,RCI,sure,I-higher-nitec-in-mechanical-engineering-3-years
+ITE College East|HF3NS,SCR,sure,I-higher-nitec-in-nursing-3-years
+ITE College East|HF3OP,CRE,less,I-higher-nitec-in-opticianry-3-years
+ITE College East|HF3PS,CES,less,I-higher-nitec-in-passenger-services-3-years
+ITE College East|HF3RB,ECS,less,I-higher-nitec-in-retail-online-business-3-years
+ITE College East|HF3SI,RCI,sure,I-higher-nitec-in-security-system-integration-3-years
+ITE College East|HF3SM,SER,unsure,I-higher-nitec-in-sport-management-3-years
+ITE College East|HF3SS,SCE,unsure,I-higher-nitec-in-community-care-social-services-3-years
+ITE College East|HF3VT,RCI,sure,I-higher-nitec-in-vertical-transportation-3-years
+ITE College East|V10,RCA,sure,I-higher-nitec-in-architectural-technology-2-years
+ITE College East|V18,RCI,unsure,I-higher-nitec-in-bio-chemical-technology-2-years
+ITE College East|V19,SER,unsure,I-higher-nitec-in-sport-management-2-years
+ITE College East|V23,RCI,less,I-higher-nitec-in-civil-structural-engineering-design-2-years
+ITE College East|V24,RCI,sure,I-higher-nitec-in-integrated-mechanical-electrical-design-2-years
+ITE College East|V27,CEI,less,I-higher-nitec-in-accounting-2-years
+ITE College East|V28,RCI,sure,I-higher-nitec-in-electrical-engineering-2-years
+ITE College East|V29,RCI,sure,I-higher-nitec-in-electronics-engineering-2-years
+ITE College East|V30,CRI,unsure,I-higher-nitec-in-it-systems-networks-2-years
+ITE College East|V31,RCI,less,I-higher-nitec-in-applied-food-science-2-years
+ITE College East|V32,RCI,sure,I-higher-nitec-in-chemical-process-technology-2-years
+ITE College East|V33,SCE,unsure,I-higher-nitec-in-community-care-social-services-2-years
+ITE College East|V34,SCR,sure,I-higher-nitec-in-nursing-2-years
+ITE College East|V35,RCI,sure,I-higher-nitec-in-mechanical-engineering-2-years
+ITE College East|V36,CRE,less,I-higher-nitec-in-opticianry-2-years
+ITE College East|V47,CIR,sure,I-higher-nitec-in-cyber-network-security-2-years
+ITE College East|V49,CIR,less,I-higher-nitec-in-business-information-systems-2-years
+ITE College East|V52,CES,sure,I-higher-nitec-in-business-administration-2-years
+ITE College East|V53,RCS,sure,I-higher-nitec-in-hairdressing-salon-management-2-years
+ITE College East|V54,RSC,less,I-higher-nitec-in-beauty-wellness-management-2-years
+ITE College East|V60,RCE,sure,I-higher-nitec-in-landscape-management-design-2-years
+ITE College East|V69,ECS,less,I-higher-nitec-in-retail-online-business-2-years
+ITE College East|V79,RCI,sure,I-higher-nitec-in-security-system-integration-2-years
+ITE College East|V80,CES,less,I-higher-nitec-in-passenger-services-2-years
+ITE College East|V81,CEI,less,I-higher-nitec-in-logistics-supply-chain-management-2-years
+ITE College East|V86,RCI,sure,I-higher-nitec-in-vertical-transportation-2-years
+ITE College East|V87,ICA,sure,I-higher-nitec-in-it-applications-development-2-years
+ITE College East|V88,RCE,less,I-higher-nitec-in-facilities-management-engineering-2-years
+ITE College West|FPACC,CEI,less,I-higher-nitec-in-accounting-2-years
+ITE College West|FPBNS,CES,sure,I-higher-nitec-in-business-administration-2-years
+ITE College West|FPBSC,CES,sure,I-higher-nitec-in-customer-experience-2-years
+ITE College West|FPECE,RCI,sure,I-higher-nitec-in-electronics-engineering-2-years
+ITE College West|FPELE,RCI,sure,I-higher-nitec-in-electrical-engineering-2-years
+ITE College West|FPHPO,CES,less,I-higher-nitec-in-hospitality-operations-2-years
+ITE College West|FPIAD,ICA,sure,I-higher-nitec-in-it-applications-development-2-years
+ITE College West|FPISN,CRI,unsure,I-higher-nitec-in-it-systems-networks-2-years
+ITE College West|FPLTO,CES,less,I-higher-nitec-in-tourism-2-years
+ITE College West|FPMCE,RCI,sure,I-higher-nitec-in-mechatronics-engineering-2-years
+ITE College West|FPMEC,RCI,sure,I-higher-nitec-in-mechanical-engineering-2-years
+ITE College West|FPNST,CIR,sure,I-higher-nitec-in-cyber-network-security-2-years
+ITE College West|HF3AC,CEI,less,I-higher-nitec-in-accounting-3-years
+ITE College West|HF3AI,ICR,less,I-higher-nitec-in-ai-applications-3-years
+ITE College West|HF3AT,RCI,sure,I-higher-nitec-in-automotive-engineering-3-years
+ITE College West|HF3BA,CES,sure,I-higher-nitec-in-business-administration-3-years
+ITE College West|HF3CA,RCE,less,I-higher-nitec-in-culinary-arts-3-years
+ITE College West|HF3CN,CIR,sure,I-higher-nitec-in-cyber-network-security-3-years
+ITE College West|HF3CX,CES,sure,I-higher-nitec-in-customer-experience-3-years
+ITE College West|HF3DE,CIE,sure,I-higher-nitec-in-data-engineering-3-years
+ITE College West|HF3EC,RCI,sure,I-higher-nitec-in-electronics-engineering-3-years
+ITE College West|HF3EE,RCI,sure,I-higher-nitec-in-electrical-engineering-3-years
+ITE College West|HF3FM,RCE,less,I-higher-nitec-in-facilities-management-engineering-3-years
+ITE College West|HF3HH,CES,less,I-higher-nitec-in-hospitality-operations-3-years
+ITE College West|HF3IA,ICA,sure,I-higher-nitec-in-it-applications-development-3-years
+ITE College West|HF3IS,CRI,unsure,I-higher-nitec-in-it-systems-networks-3-years
+ITE College West|HF3MC,RCI,sure,I-higher-nitec-in-mechatronics-engineering-3-years
+ITE College West|HF3ME,RCI,sure,I-higher-nitec-in-mechanical-engineering-3-years
+ITE College West|HF3OT,RCI,less,I-higher-nitec-in-operational-information-technology-3-years
+ITE College West|HF3PB,RCE,less,I-higher-nitec-in-pastry-baking-3-years
+ITE College West|HF3RB,ECS,less,I-higher-nitec-in-retail-online-business-3-years
+ITE College West|HF3RT,RCE,less,I-higher-nitec-in-rapid-transit-engineering-3-years
+ITE College West|HF3SI,RCI,sure,I-higher-nitec-in-security-system-integration-3-years
+ITE College West|HF3SM,SER,unsure,I-higher-nitec-in-sport-management-3-years
+ITE College West|HF3TS,CES,less,I-higher-nitec-in-tourism-3-years
+ITE College West|V20,CIE,sure,I-higher-nitec-in-data-engineering-2-years
+ITE College West|V25,ICR,less,I-higher-nitec-in-ai-applications-2-years
+ITE College West|V37,RCE,less,I-higher-nitec-in-culinary-arts-2-years
+ITE College West|V38,RCE,less,I-higher-nitec-in-pastry-baking-2-years
+ITE College West|V41,RCI,sure,I-higher-nitec-in-automotive-engineering-2-years
+ITE College West|V62,CES,sure,I-higher-nitec-in-customer-experience-2-years
+ITE College West|V63,ICA,sure,I-higher-nitec-in-it-applications-development-2-years
+ITE College West|V64,CES,less,I-higher-nitec-in-hospitality-operations-2-years
+ITE College West|V65,CES,less,I-higher-nitec-in-tourism-2-years
+ITE College West|V67,RCI,sure,I-higher-nitec-in-electrical-engineering-2-years
+ITE College West|V68,RCI,sure,I-higher-nitec-in-electronics-engineering-2-years
+ITE College West|V70,CRI,unsure,I-higher-nitec-in-it-systems-networks-2-years
+ITE College West|V73,RCI,sure,I-higher-nitec-in-mechatronics-engineering-2-years
+ITE College West|V74,CIR,sure,I-higher-nitec-in-cyber-network-security-2-years
+ITE College West|V76,ECS,less,I-higher-nitec-in-retail-online-business-2-years
+ITE College West|V77,RCI,sure,I-higher-nitec-in-security-system-integration-2-years
+ITE College West|V78,RCI,sure,I-higher-nitec-in-mechanical-engineering-2-years
+ITE College West|V83,RCI,less,I-higher-nitec-in-operational-information-technology-2-years
+ITE College West|V85,SER,unsure,I-higher-nitec-in-sport-management-2-years
+ITE College West|V89,RCE,less,I-higher-nitec-in-facilities-management-engineering-2-years
+ITE College West|V90,CEI,less,I-higher-nitec-in-accounting-2-years
+ITE College West|V92,CES,sure,I-higher-nitec-in-business-administration-2-years
+ITE College West|V96,RCE,less,I-higher-nitec-in-rapid-transit-engineering-2-years
+Nanyang Polytechnic|C23,RCI,unsure,P-C23
+Nanyang Polytechnic|C24,CER,unsure,P-C24
+Nanyang Polytechnic|C25,ICR,unsure,P-C25
+Nanyang Polytechnic|C26,RCI,less,P-C26
+Nanyang Polytechnic|C27,CRI,less,P-C27
+Nanyang Polytechnic|C28,ACE,unsure,P-C28
+Nanyang Polytechnic|C29,ARC,unsure,P-C29
+Nanyang Polytechnic|C30,ACI,less,P-C30
+Nanyang Polytechnic|C31,CIR,sure,P-C31
+Nanyang Polytechnic|C32,AIR,unsure,P-C32
+Nanyang Polytechnic|C34,ECS,less,P-C34
+Nanyang Polytechnic|C35,CEI,less,P-C35
+Nanyang Polytechnic|C36,CIR,less,P-C36
+Nanyang Polytechnic|C38,RCA,less,P-C38
+Nanyang Polytechnic|C41,CRI,unsure,P-C41
+Nanyang Polytechnic|C42,RIC,less,P-C42
+Nanyang Polytechnic|C43,CIE,sure,P-C43
+Nanyang Polytechnic|C45,RIC,less,P-C45
+Nanyang Polytechnic|C46,ECR,less,P-C46
+Nanyang Polytechnic|C47,SCE,unsure,P-C47
+Nanyang Polytechnic|C54,CIR,sure,P-C54
+Nanyang Polytechnic|C62,RCI,unsure,P-C62
+Nanyang Polytechnic|C65,CRI,less,P-C65
+Nanyang Polytechnic|C67,ECS,sure,P-C67
+Nanyang Polytechnic|C69,CRI,unsure,P-C69
+Nanyang Polytechnic|C70,ICA,sure,P-C70
+Nanyang Polytechnic|C71,RCI,sure,P-C71
+Nanyang Polytechnic|C72,SRI,unsure,P-C72
+Nanyang Polytechnic|C75,CIR,less,P-C75
+Nanyang Polytechnic|C81,SEC,unsure,P-C81
+Nanyang Polytechnic|C85,CIR,sure,P-C85
+Nanyang Polytechnic|C87,RCI,less,P-C87
+Nanyang Polytechnic|C89,RCI,unsure,P-C89
+Nanyang Polytechnic|C93,ECA,less,P-C93
+Nanyang Polytechnic|C94,ECS,sure,P-C94
+Nanyang Polytechnic|C96,CES,sure,P-C96
+Nanyang Polytechnic|C97,SCI,less,P-C97
+Nanyang Polytechnic|C98,CEI,sure,P-C98
+Ngee Ann Polytechnic|N11,SEC,less,P-N11
+Ngee Ann Polytechnic|N12,ARC,sure,P-N12
+Ngee Ann Polytechnic|N13,ACR,unsure,P-N13
+Ngee Ann Polytechnic|N14,AEC,unsure,P-N14
+Ngee Ann Polytechnic|N15,CRI,unsure,P-N15
+Ngee Ann Polytechnic|N16,CIE,less,P-N16
+Ngee Ann Polytechnic|N40,ECR,sure,P-N40
+Ngee Ann Polytechnic|N41,RCI,sure,P-N41
+Ngee Ann Polytechnic|N42,RCI,sure,P-N42
+Ngee Ann Polytechnic|N43,RCI,sure,P-N43
+Ngee Ann Polytechnic|N44,RCI,unsure,P-N44
+Ngee Ann Polytechnic|N45,ECS,sure,P-N45
+Ngee Ann Polytechnic|N48,ECS,sure,P-N48
+Ngee Ann Polytechnic|N50,RCI,sure,P-N50
+Ngee Ann Polytechnic|N51,CEI,sure,P-N51
+Ngee Ann Polytechnic|N53,CES,sure,P-N53
+Ngee Ann Polytechnic|N54,CIR,sure,P-N54
+Ngee Ann Polytechnic|N56,RCI,unsure,P-N56
+Ngee Ann Polytechnic|N57,RCE,less,P-N57
+Ngee Ann Polytechnic|N59,IRC,less,P-N59
+Ngee Ann Polytechnic|N60,RCI,sure,P-N60
+Ngee Ann Polytechnic|N65,RCI,less,P-N65
+Ngee Ann Polytechnic|N67,AEC,sure,P-N67
+Ngee Ann Polytechnic|N69,SIC,less,P-N69
+Ngee Ann Polytechnic|N70,SCA,unsure,P-N70
+Ngee Ann Polytechnic|N71,RIC,less,P-N71
+Ngee Ann Polytechnic|N72,ECS,sure,P-N72
+Ngee Ann Polytechnic|N73,CRI,less,P-N73
+Ngee Ann Polytechnic|N74,IRC,sure,P-N74
+Ngee Ann Polytechnic|N81,CIE,less,P-N81
+Ngee Ann Polytechnic|N82,RCA,less,P-N82
+Ngee Ann Polytechnic|N83,ISR,less,P-N83
+Ngee Ann Polytechnic|N85,CEI,sure,P-N85
+Ngee Ann Polytechnic|N88,AEC,less,P-N88
+Ngee Ann Polytechnic|N91,ECS,sure,P-N91
+Ngee Ann Polytechnic|N93,RIC,sure,P-N93
+Ngee Ann Polytechnic|N94,CIR,sure,P-N94
+Ngee Ann Polytechnic|N95,SAC,sure,P-N95
+Ngee Ann Polytechnic|N96,SAC,less,P-N96
+Ngee Ann Polytechnic|N97,ECS,less,P-N97
+Ngee Ann Polytechnic|N98,CIR,less,P-N98
+Republic Polytechnic|R11,CEI,sure,P-R11
+Republic Polytechnic|R12,CIR,sure,P-R12
+Republic Polytechnic|R13,CIE,sure,P-R13
+Republic Polytechnic|R14,IRC,less,P-R14
+Republic Polytechnic|R16,CRI,less,P-R16
+Republic Polytechnic|R17,CRI,unsure,P-R17
+Republic Polytechnic|R18,CIE,sure,P-R18
+Republic Polytechnic|R19,AEC,less,P-R19
+Republic Polytechnic|R21,CEI,sure,P-R21
+Republic Polytechnic|R22,CRI,less,P-R22
+Republic Polytechnic|R24,RAC,sure,P-R24
+Republic Polytechnic|R25,ECS,sure,P-R25
+Republic Polytechnic|R26,SRI,unsure,P-R26
+Republic Polytechnic|R28,ECS,sure,P-R28
+Republic Polytechnic|R32,AEC,less,P-R32
+Republic Polytechnic|R33,SEC,less,P-R33
+Republic Polytechnic|R37,ECS,sure,P-R37
+Republic Polytechnic|R39,CER,sure,P-R39
+Republic Polytechnic|R40,RCI,less,P-R40
+Republic Polytechnic|R42,RIC,less,P-R42
+Republic Polytechnic|R43,SRE,unsure,P-R43
+Republic Polytechnic|R45,SCE,less,P-R45
+Republic Polytechnic|R46,ERC,sure,P-R46
+Republic Polytechnic|R47,CIR,sure,P-R47
+Republic Polytechnic|R48,ECI,unsure,P-R48
+Republic Polytechnic|R49,SER,unsure,P-R49
+Republic Polytechnic|R50,RCI,less,P-R50
+Republic Polytechnic|R52,ECS,sure,P-R52
+Republic Polytechnic|R54,RCI,sure,P-R54
+Republic Polytechnic|R55,CIR,sure,P-R55
+Republic Polytechnic|R56,RCI,unsure,P-R56
+Republic Polytechnic|R57,ECS,less,P-R57
+Republic Polytechnic|R58,CIR,less,P-R58
+Republic Polytechnic|R59,CRI,unsure,P-R59
+Republic Polytechnic|R60,ECI,sure,P-R60
+Republic Polytechnic|R61,CRE,less,P-R61
+Republic Polytechnic|R62,RIC,sure,P-R62
+Republic Polytechnic|R63,SRE,unsure,P-R63
+Republic Polytechnic|R65,ARC,unsure,P-R65
+Republic Polytechnic|R66,ECS,sure,P-R66
+Republic Polytechnic|R67,ACI,unsure,P-R67
+Republic Polytechnic|R68,CER,less,P-R68
+Singapore Polytechnic|DNS,CRE,unsure,P-DNS
+Singapore Polytechnic|S28,CRI,unsure,P-S28
+Singapore Polytechnic|S29,ARE,unsure,P-S29
+Singapore Polytechnic|S30,ICE,sure,P-S30
+Singapore Polytechnic|S31,ECS,less,P-S31
+Singapore Polytechnic|S32,CIR,less,P-S32
+Singapore Polytechnic|S38,CRI,unsure,P-S38
+Singapore Polytechnic|S40,RIC,less,P-S40
+Singapore Polytechnic|S42,CER,sure,P-S42
+Singapore Polytechnic|S47,RCI,unsure,P-S47
+Singapore Polytechnic|S48,ECS,sure,P-S48
+Singapore Polytechnic|S50,ECS,sure,P-S50
+Singapore Polytechnic|S53,ICR,less,P-S53
+Singapore Polytechnic|S54,CIR,sure,P-S54
+Singapore Polytechnic|S63,RCI,less,P-S63
+Singapore Polytechnic|S64,RIC,unsure,P-S64
+Singapore Polytechnic|S66,RCA,less,P-S66
+Singapore Polytechnic|S67,ISR,less,P-S67
+Singapore Polytechnic|S68,RCI,less,P-S68
+Singapore Polytechnic|S69,ICE,sure,P-S69
+Singapore Polytechnic|S70,RCI,less,P-S70
+Singapore Polytechnic|S71,CEI,sure,P-S71
+Singapore Polytechnic|S73,RIC,unsure,P-S73
+Singapore Polytechnic|S74,CEI,less,P-S74
+Singapore Polytechnic|S75,CEI,unsure,P-S75
+Singapore Polytechnic|S76,CER,less,P-S76
+Singapore Polytechnic|S88,RCI,less,P-S88
+Singapore Polytechnic|S89,RAC,less,P-S89
+Singapore Polytechnic|S90,RCI,unsure,P-S90
+Singapore Polytechnic|S91,RCI,less,P-S91
+Singapore Polytechnic|S94,REI,unsure,P-S94
+Singapore Polytechnic|S95,ECR,sure,P-S95
+Singapore Polytechnic|S98,IRC,less,P-S98
+Singapore Polytechnic|S99,RCI,unsure,P-S99
+Temasek Polytechnic|T01,ECS,less,P-T01
+Temasek Polytechnic|T02,CEI,sure,P-T02
+Temasek Polytechnic|T04,CER,sure,P-T04
+Temasek Polytechnic|T07,CEI,less,P-T07
+Temasek Polytechnic|T08,ECS,sure,P-T08
+Temasek Polytechnic|T09,CEI,sure,P-T09
+Temasek Polytechnic|T10,ECI,less,P-T10
+Temasek Polytechnic|T13,ICR,unsure,P-T13
+Temasek Polytechnic|T18,REC,less,P-T18
+Temasek Polytechnic|T20,AER,less,P-T20
+Temasek Polytechnic|T22,ARC,sure,P-T22
+Temasek Polytechnic|T23,ARC,less,P-T23
+Temasek Polytechnic|T25,CRI,less,P-T25
+Temasek Polytechnic|T26,RCI,unsure,P-T26
+Temasek Polytechnic|T28,ECR,less,P-T28
+Temasek Polytechnic|T29,RCI,less,P-T29
+Temasek Polytechnic|T30,CIR,sure,P-T30
+Temasek Polytechnic|T33,RCI,unsure,P-T33
+Temasek Polytechnic|T35,ARI,less,P-T35
+Temasek Polytechnic|T38,RCI,sure,P-T38
+Temasek Polytechnic|T40,ECA,less,P-T40
+Temasek Polytechnic|T43,CEI,less,P-T43
+Temasek Polytechnic|T45,RIC,less,P-T45
+Temasek Polytechnic|T48,SCI,unsure,P-T48
+Temasek Polytechnic|T50,RCI,sure,P-T50
+Temasek Polytechnic|T51,RCI,less,P-T51
+Temasek Polytechnic|T53,SCI,unsure,P-T53
+Temasek Polytechnic|T56,RIC,less,P-T56
+Temasek Polytechnic|T58,ICA,less,P-T58
+Temasek Polytechnic|T59,ACI,unsure,P-T59
+Temasek Polytechnic|T60,CIE,sure,P-T60
+Temasek Polytechnic|T62,CIR,sure,P-T62
+Temasek Polytechnic|T63,CIR,less,P-T63
+Temasek Polytechnic|T64,CRI,unsure,P-T64
+Temasek Polytechnic|T66,RCI,sure,P-T66
+Temasek Polytechnic|T67,ECI,less,P-T67
+Temasek Polytechnic|T68,SAC,sure,P-T68
+Temasek Polytechnic|T69,ICE,sure,P-T69
+Temasek Polytechnic|T70,CRI,unsure,P-T70
+Temasek Polytechnic|T71,ACR,unsure,P-T71
+Temasek Polytechnic|T72,RCI,unsure,P-T72

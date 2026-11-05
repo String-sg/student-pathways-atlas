@@ -68,6 +68,10 @@ const readCsv = rel => csvParse(fs.readFileSync(ROOT + rel, 'utf8'));
 const latest = (dir, pre) => { const f = fs.readdirSync(ROOT + dir).filter(x => x.startsWith(pre) && x.endsWith('.csv')).sort().pop(); return dir + '/' + f; };
 
 const DATA = JSON.parse(fs.readFileSync(ROOT + 'app/build/data.json', 'utf8'));
+// Republic Polytechnic moved its course pages; the page carries the new addresses (data/course_link_fixes.csv), data.json keeps MOE's
+const LINK_FIXES = fs.readFileSync(ROOT + 'data/course_link_fixes.csv', 'utf8').trim().split(/\r?\n/).slice(1).map(l => l.match(/(https:[^,"\s]+)/g));
+const fixLink = u => { const f = LINK_FIXES.find(x => x[0] === u); return f ? f[1] : u; };
+const fixLinks = t => LINK_FIXES.reduce((a, f) => a.split('"' + f[0] + '"').join('"' + f[1] + '"'), t);
 const COLS = DATA.courses.columns;
 const ROWS = DATA.courses.rows.map(r => Object.fromEntries(COLS.map((k, i) => [k, r[i]])));
 const RECS = DATA.requirements.records;
@@ -94,7 +98,8 @@ const G3 = ['A1', 'A2', 'B3', 'B4', 'C5', 'C6', 'D7', 'E8', 'F9'];
 const roundHalfUp = v => Math.floor(v + 0.5);
 
 const mapG2 = p => p <= 3 ? 1 : p <= 6 ? 2 : p - 4;
-const estimateRef = (kind, x) => Math.max(1, kind === 'L1R4' ? Math.min(16, roundHalfUp(x * 5 / 6)) : Math.min(22, roundHalfUp(x * 4 / 5 + mapG2(roundHalfUp(x / 5)))));
+// MOE's PSE polytechnic page: ELR2B2 must not exceed 22; for the Diploma in Nursing, 24
+const estimateRef = (kind, x, row) => Math.max(1, kind === 'L1R4' ? Math.min(16, roundHalfUp(x * 5 / 6)) : Math.min(row && row.course_name === 'Nursing' ? 24 : 22, roundHalfUp(x * 4 / 5 + mapG2(roundHalfUp(x / 5)))));
 const estKindOf = agg => /^L1R4/.test(agg) ? 'L1R4' : /^ELR2B2-[ABCD]/.test(agg) ? 'ELR2B2' : '';
 const m5 = p => Math.min(5, mapG2(p));
 const fiveSubjectEstimate = x => Math.max(1, (x % 5) * m5(Math.floor(x / 5) + 1) + (5 - (x % 5)) * m5(Math.floor(x / 5)));
@@ -115,7 +120,7 @@ function estimateOfRow(row, agg) {
   }
   if (/^ELR2B2-[ABCD]\(2027\)$/.test(agg)) {
     if (row.institution_type !== 'Polytechnic' || row.aggregate_type !== agg.replace(/\(.*$/, '')) return null;
-    const e = one(row.net_range_2026, x => estimateRef('ELR2B2', x)); return e && Object.assign(e, { basis: 'jae' });
+    const e = one(row.net_range_2026, x => estimateRef('ELR2B2', x, row)); return e && Object.assign(e, { basis: 'jae' });
   }
   if (ITE3_AGG.test(agg)) {
     if (row.institution_type !== 'ITE' || row.admission_route !== 'JIEN') return null;
@@ -276,7 +281,7 @@ const SPLIT_SECS = ['poly', 'ppoly', 'ite2', 'pite2', 'jien', 'pite3', 'dpp', 'd
 const SPLITSET = new Set(SPLIT_SECS);
 const ITE_SHORT_SECS = ['ite2', 'pite2', 'jien', 'pite3', 'dpp'];  // brief E: inside a "2-year / 3-year Higher Nitec" section a title drops "Higher Nitec in " and " (2 Years)" / " (3 Years)"
 // the sections a tile stands for, by the words of its label (PW_ROW in the page): "JC, MI · L1R4" is the JC and MI sections
-const SECS_OF = { JC: ['jc', 'pjc'], MI: ['mi', 'pmi'], Poly: ['poly', 'ppoly'], PFP: ['pfp', 'ppfp'], DPP: ['dpp', 'dppvia'], ITE: ['ite2'], 'ITE 2-year': ['pite2'], 'ITE 3-year': ['jien', 'pite3'], Arts: ['ai', 'pai'], 'NAFA Foundation Programme': ['nfp', 'pnfp'] };
+const SECS_OF = { JC: ['jc', 'pjc'], MI: ['mi', 'pmi'], Poly: ['poly', 'ppoly'], PFP: ['pfp', 'ppfp'], DPP: ['dpp', 'dppvia'], 'ITE 2-year': ['ite2', 'pite2'], 'ITE 3-year': ['jien', 'pite3'], Arts: ['ai', 'pai'], 'NAFA Foundation Programme': ['nfp', 'pnfp'] };
 // the pathway names a pop-over line uses (PW_NAME in the page), and the sections each stands for
 const PW_SECS = { 'JC': ['jc', 'pjc'], 'MI': ['mi', 'pmi'], 'Polytechnic Year 1': ['poly', 'ppoly'], 'PFP': ['pfp', 'ppfp'], 'DPP': ['dppvia', 'dpp'], 'ITE 2-year': ['ite2', 'pite2'], 'ITE 3-year': ['jien', 'pite3'], 'Arts diplomas': ['ai', 'pai'], 'NAFA Foundation Programme': ['nfp', 'pnfp'] };
 const PW_NAME_OF = Object.fromEntries(Object.entries(PW_SECS).flatMap(([n, ids]) => ids.map(i => [i, n])));
@@ -286,14 +291,16 @@ const iteShortTitle = t => String(t).replace(/^Higher Nitec in /, '').replace(/ 
 const TOP_DOM = `(() => {
   const t = s => (s || '').replace(/\\s+/g, ' ').trim(), q = s => document.querySelector(s);
   const L = document.getElementById('s-list');
+  // the tiles sit on Results only; the page hands over the same HTML so they are read while on Courses
+  const A = document.createElement('div'); A.innerHTML = window.PSE_ATLAS.summary();
   return {
     // the 5th-year tile stands for no course section; it is read on its own and checked against the engine's summary (2.13)
-    fifth: (() => { const b = L.querySelector('#aggs-c .tile[data-v="fifth"]'); return b ? { label: t((b.querySelector('.t-k') || {}).textContent), num: t((b.querySelector('.agg-n, .t-r') || {}).textContent),
+    fifth: (() => { const b = A.querySelector('#aggs .tile[data-v="fifth"]'); return b ? { label: t((b.querySelector('.t-k') || {}).textContent), num: t((b.querySelector('.agg-n, .t-r') || {}).textContent),
       word: t((b.querySelector('.t-w') || {}).textContent), lines: [...b.nextElementSibling.querySelectorAll('.tip-l')].map(l => t(l.textContent)) } : null; })(),
-    tiles: [...L.querySelectorAll('#aggs-c .tile-w')].filter(w => w.querySelector('.tile').dataset.v !== 'fifth').map(w => { const b = w.querySelector('.tile'), tip = w.querySelector('.ind-tip'); return { label: t((b.querySelector('.t-k') || {}).textContent), num: t((b.querySelector('.agg-n, .t-r') || {}).textContent),
+    tiles: [...A.querySelectorAll('#aggs .tile-w')].filter(w => w.querySelector('.tile').dataset.v !== 'fifth').map(w => { const b = w.querySelector('.tile'), tip = w.querySelector('.ind-tip'); return { label: t((b.querySelector('.t-k') || {}).textContent), num: t((b.querySelector('.agg-n, .t-r') || {}).textContent),
       word: t((b.querySelector('.t-w') || {}).textContent), off: b.classList.contains('off'), chk: b.classList.contains('chk'), key: b.dataset.v, title: b.getAttribute('title'), lines: [...w.querySelectorAll('.tip-l')].map(l => t(l.textContent)), aria: tip ? tip.getAttribute('aria-label') : '' }; }),
     rchips: [...L.querySelectorAll('.rchips .rchip')].map(b => ({ w: b.dataset.v, on: b.classList.contains('on'), x: b.dataset.do === 'route-hide', add: b.dataset.do === 'route-add', label: t((b.querySelector('[data-wc]') || {}).textContent) })),
-    rchipsAfterTiles: (() => { const a = L.querySelector('#aggs-c'), r = L.querySelector('.rchips'); return !!a && !!r && a.nextElementSibling === r; })(),
+    rchipsAfterTiles: (() => { const r = L.querySelector('.rchips'); return !!r && L.firstElementChild === r; })(),
     tbar: (() => { const b = q('#tbar'); if (!b) return null; return { group: [...b.querySelectorAll('[data-do="groupby"]')].map(x => ({ v: x.dataset.v, on: x.getAttribute('aria-pressed') === 'true', t: t(x.textContent) })),
       filter: (() => { const f = b.querySelector('[data-do="sheet-filter"]'); return f ? { text: t(f.textContent), n: Number((f.querySelector('.count') || {}).textContent || 0) } : null; })(), map: !!b.querySelector('a[href="#map"]'),
       sticky: getComputedStyle(b).position }; })(),
@@ -335,7 +342,16 @@ async function expandAndRead(p, modes = ['none']) {
 // ================================================================================================ the page's own copies of the data
 let PAGE_HTML = '';
 try { PAGE_HTML = await (await fetch(URL0)).text(); } catch (e) { PAGE_HTML = ''; }
-const block = id => { const m = new RegExp('<script[^>]*id="' + id + '"[^>]*>([\\s\\S]*?)</script>').exec(PAGE_HTML); return m ? JSON.parse(m[1]) : null; };
+// the online page's data blocks are scrambled, and this copy's are not; both are read here
+const ABC = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const DK_KEY = (PAGE_HTML.match(/["'`]([0-9A-Za-z]{62})["'`]/g) || []).map(s => s.slice(1, -1)).find(s => s !== ABC && new Set(s).size === 62);
+const block = id => {
+  const m = new RegExp('<script[^>]*id="' + id + '"([^>]*)>([\\s\\S]*?)</script>').exec(PAGE_HTML);
+  if (!m) return null;
+  if (!/data-dk/.test(m[1])) return JSON.parse(m[2]);
+  const map = {}; for (let i = 0; i < 62; i++) map[DK_KEY[i]] = ABC[i];
+  return JSON.parse(m[2].replace(/[0-9A-Za-z]/g, c => map[c]));
+};
 const PAGE_DATA = block('pse-data');  // the engine data the page ships
 const PAGE_EXTRA = block('page-data');  // institutions, schools, calendar, riasec, arts, subject levels
 
@@ -409,7 +425,11 @@ async function check1() {
         const strip = x => JSON.parse(JSON.stringify(x), (kk, v) => (kk === 'net_range_2026' ? undefined : v));
         a = strip(a); b = strip(b);
       }
-      c15.ass(JSON.stringify(a) === JSON.stringify(b), 'page copy of ' + k + ' differs from data.json');
+      // the page's copy blanks our working notes (build_app.py NOTE_KEYS, DEF_NOTE_KEYS) and trims a stub's reason: set those aside here
+      const notes = new Set(['file', 'heading', 'open_questions'].concat(k === 'definitions' ? ['notes', 'note', 'source_vintage', 'provisional', 'rationale', 'stub_reason'] : []));
+      const bare = x => JSON.parse(JSON.stringify(x === undefined ? null : x), (kk, v) => (notes.has(kk) ? undefined : v));
+      if (k === 'requirements' || k === 'definitions') { a = bare(a); b = bare(b); }
+      c15.ass(JSON.stringify(a) === fixLinks(JSON.stringify(b)), 'page copy of ' + k + ' differs from data.json');
     });
   }
   info('data version', 'snapshot ' + SNAPSHOT + ', engine ' + DATA.engine_version + ', matcher ' + DATA.matcher_version);
@@ -417,7 +437,7 @@ async function check1() {
   // 1.10 words the page must never carry (the floor)
   const c110 = check(1, '1.10', 'the page file and app/build/data.json never carry a local file path');
   c110.ass(PAGE_HTML.length > 1000, 'could not read the page file');
-  c110.ass(!/[\/\\](?:Users|home)[\/\\]\w/.test(PAGE_HTML), 'the page file carries a local path');
+  c110.ass(!/[\/\\](?:Users|home)[\/\\]\w/.test(PAGE_HTML + JSON.stringify(PAGE_DATA) + JSON.stringify(PAGE_EXTRA)), 'the page file carries a local path');
   c110.ass(!/[\/\\](?:Users|home)[\/\\]\w/.test(JSON.stringify(DATA)), 'data.json carries a local path');
   // 1.5b the raw CourseFinder scrape (data/snapshots/<date>/*.csv): the first source of the taxonomy
   const c19 = check(1, '1.9', 'the raw CourseFinder snapshot (poly, ITE, JC scrapes) agrees with data.json on course name, aggregate type and range, row by row');
@@ -536,6 +556,7 @@ function genStudent(i) {
   }
   return st;
 }
+let visibleForCount = [];
 const stateOf = st => state({ year: st.year, level: st.level, cca: st.cca, where: st.where, school: st.school, lep: st.lep, reach: st.reach === true, allow: st.allow || 0, jcSort: st.jcSort || undefined,
   fields: st.fields || [], insts: st.insts || [], q: st.q || '', stars: st.stars || [], rows: st.subs.map(s => row(s[0], s[1], s[2])) });
 
@@ -543,7 +564,7 @@ const stateOf = st => state({ year: st.year, level: st.level, cca: st.cca, where
 const EX_ALL_2026 = ['JAE-2027', 'DPP-2027', 'PFP-2027', 'JIE-N-2027'];
 function runEngine(st) {
   const subjects = st.subs.map(s => ({ subject: s[0], level: s[1], grade: s[2], year: st.year }));
-  const jcAsked = st.year === 2026 && st.level === 'O' && st.where.includes('jc');
+  const jcAsked = st.year === 2026 && st.level === 'O';
   const affJCs = jcAsked && st.school ? ((PAGE_EXTRA && PAGE_EXTRA.schools || []).find(s => s[0] === st.school) || [0, []])[1] : [];
   const bonus = {};
   if (['Excellent', 'Good', 'Fair'].includes(st.cca)) bonus.cca = st.cca;
@@ -788,8 +809,10 @@ function matchesFilter(c, st, M) {
     if (mine.length && !c.insts.some(i => mine.includes(i))) return false;
   }
   if (st.fields && st.fields.length && ['course', 'ite', 'pfp'].includes(c.kind)) {
-    const fs = c.fields || (c.field ? [c.field] : []);
-    if (!fs.some(f => st.fields.includes(f))) return false;
+    // Polytechnic and ITE have their own ticks (ITE's carry the prefix ite|), so a tick on one leaves the other alone
+    const fs = c.fields || (c.field ? [c.field] : []), ite = c.where === 'ite';
+    const mine = st.fields.filter(k => k.startsWith('ite|') === ite);
+    if (mine.length && !fs.some(f => mine.includes((ite ? 'ite|' : '') + f))) return false;
   }
   if (st.q) {
     if (c.kind === 'arts') {  // a search also looks in the programmes an arts card lists (data/locations/arts_institutions_2027.csv)
@@ -891,7 +914,7 @@ async function runStudents() {
       const kind = pick(['insts', 'fields', 'q']);
       const c = pick(M.cards.filter(x => x.kind !== 'arts'));
       if (c && kind === 'insts') st.insts = [pick(c.insts)];
-      else if (c && kind === 'fields' && (c.field || (c.fields || []).length)) st.fields = [c.field || c.fields[0]];
+      else if (c && kind === 'fields' && (c.field || (c.fields || []).length)) st.fields = [(c.where === 'ite' ? 'ite|' : '') + (c.field || c.fields[0])];
       else if (c && kind === 'q') st.q = (c.title.split(/[\s,]+/).filter(w => w.length > 4)[0] || c.title.split(' ')[0]);
       if (st.insts || st.fields || st.q) { await loadState(p, stateOf(st)); }
     }
@@ -969,7 +992,7 @@ async function runStudents() {
         else {
           COVERED_ROWS.add(row.id);
           const pairs = [['course_name', o.r.course_name, row.course_name], ['institution', o.r.institution, row.institution], ['course_code', o.r.course_code, row.course_code],
-            ['field', o.r.field_of_study || '', row.field_of_study || ''], ['moe_url', o.r.moe_url, row.moe_url], ['institution_url', o.r.institution_url || '', row.institution_url || ''], ['ite_course_code', o.r.ite_course_code || '', row.ite_course_code || '']];
+            ['field', o.r.field_of_study || '', row.field_of_study || ''], ['moe_url', o.r.moe_url, row.moe_url], ['institution_url', o.r.institution_url || '', fixLink(row.institution_url || '')], ['ite_course_code', o.r.ite_course_code || '', row.ite_course_code || '']];
           let good = true; pairs.forEach(([k, a, b]) => { if (a !== b) { good = false; C.rowsOnScreen.fail(tag + ' ' + k + ': page=' + a + ' data.json=' + b); } });
           if (good) C.rowsOnScreen.ok();
         }
@@ -1043,6 +1066,7 @@ async function runStudents() {
     const visibleKeys = new Set(visible.filter(c => !SPLITSET.has(c.sec)).map(c => c.key).concat(visibleViews.map(v => v.key)));
     const judged = visible.filter(c => !SPLITSET.has(c.sec)).concat(visibleViews);
     const cardsOf = (sec) => visible.filter(c => c.sec === sec);
+    visibleForCount = judged;  // the rows the list shows, an ITE course once per college, within the picked institutions
     judged.forEach(c => C.presence.ass(domBy.has(c.key), label + ' card missing from the list: ' + c.key + ' (oracle scope ' + scope.join('+') + (SCOPE.defaultMode ? ' default' : ' picks') + '; page groups ' + counts.groups.map(g => g.wid).join('+') + '; card state ' + c.state + '; not open: ' + (counts.notOpen ? counts.notOpen.text : 'none') + ')'));
     dom.forEach(d => {
       const c = cardByKey.get(d.key);
@@ -1210,6 +1234,7 @@ async function runStudents() {
       else if ((m = /^(\S+): ([A-D] \d+(?: · [A-D] \d+)*)$/.exec(body))) m[2].split(' · ').forEach(t => { const mm = /^([A-D]) (\d+)$/.exec(t); pairs.push({ name: m[1] + '-' + mm[1], val: Number(mm[2]) }); });
       else if ((m = /^([A-Z0-9][A-Za-z0-9\-:]*(?:, [A-Z0-9][A-Za-z0-9\-:]*)+): (\d+)$/.exec(body))) m[1].split(', ').forEach(nm => pairs.push({ name: nm, val: Number(m[2]) }));  // aggregates with one number between them
       else body.split(' · ').forEach(t => { const mm = /^(\S+) (\d+)$/.exec(t); if (mm) pairs.push({ name: mm[1], val: Number(mm[2]) }); });
+      if (!pairs.length && /^MOE also needs grade 3|^Check with the |^The grade requirement|courses stay off your list/.test(text)) return;  // the PFP tile names MOE's floors; a JC or MI tile that can't be worked out says who to ask
       if (!pairs.length) { C.header.fail(label + ' ' + where + ' header line not understood: "' + text + '"'); return; }
       pairs.forEach(({ name, val }) => {
         const fam = /^ELR2B2$/.test(name);
@@ -1413,14 +1438,12 @@ async function runStudents() {
         });
       }
     }
-    // 4.7 the numbers in the Institution part of the Filter sheet
+    // 4.7 the numbers in the institution lists on Options (2026 only: 2027 shows none)
     if (st.year === 2026 && !(st.insts && st.insts.length) && !st.q && chance(0.34)) {
-      await p.eval(`location.hash = '#courses'; 1`); await sleep(80);
-      const sheetOpened = await p.eval(`(() => { const b = document.querySelector('[data-do="sheet-filter"]'); if (!b) return false; b.click(); return true; })()`);
+      await p.eval(`location.hash = '#options'; 1`); await sleep(80);
+      const sheetOpened = await p.eval(`!!document.querySelector('#s-options details.inst-group')`);
       if (sheetOpened) {
-        await sleep(80);
-        const entries = await p.eval(`[...document.querySelectorAll('#sheet fieldset.inst-group')].flatMap(f => [...f.querySelectorAll('li')].map(li => ({ g: f.querySelector('legend').textContent, name: li.querySelector('label span[data-wc="0"]').textContent, n: Number((li.querySelector('.count') || {}).textContent) })))`);
-        await p.eval(`(document.querySelector('#sheet [data-do="sheet-close"]')||{click(){}}).click(); 1`);
+        const entries = await p.eval(`[...document.querySelectorAll('#s-options details.inst-group')].flatMap(f => [...f.querySelectorAll('li')].map(li => ({ g: f.querySelector('summary').firstChild.textContent.trim(), name: li.querySelector('label span[data-wc="0"]').textContent, n: Number((li.querySelector('.count') || {}).textContent) })))`);
         const LEG = { jc: 'Junior colleges', mi: 'Millennia Institute', poly: 'Polytechnics', ite: 'ITE colleges', arts: 'Arts institutions' };
         const want = new Map();
         const secs = [...new Set(visible.map(c => c.sec))];
@@ -1466,11 +1489,11 @@ async function runStudents() {
         const words = tileWords(tl), secs = words.flatMap(w => (SECS_OF[w] || []).filter(present));
         C.why.ass(words.every(w => SECS_OF[w]) && secs.length > 0, label + ' tile "' + tl.label + '" stands for no section that has cards');
         if (tl.off) C.why.ass(secs.every(closedSec), label + ' closed tile "' + tl.label + '" although ' + secs.filter(x => !closedSec(x)).join(', ') + ' can be applied for');
-        else C.why.ass(secs.some(x => !closedSec(x)), label + ' open tile "' + tl.label + '" although nothing in ' + secs.join(', ') + ' can be applied for');
+        else C.why.ass(secs.some(x => !closedSec(x) || ((x === 'jc' || x === 'mi') && M2.cards.some(c => c.sec === x) && M2.cards.filter(c => c.sec === x).every(c => c.state === 'unsure'))), label + ' open tile "' + tl.label + '" although nothing in ' + secs.join(', ') + ' can be applied for');
         if (tl.off) C.why.ass(tl.lines.length > 0, label + ' closed tile "' + tl.label + '" says nothing in its pop-over');
         // closed "✗ …"; open with every course in "check" "? Check with NAFA / LASALLE / the school" (amber); else "✓ open"
         { const info = tileInfo(tl);
-          C.why.eq([tl.off, tl.chk, tl.off ? /^✗ /.test(tl.word) : tl.word], [info.closed, info.check, info.closed ? true : info.word], label + ' tile "' + tl.label + '" [closed, amber check look, its word]'); }
+          if (!tl.off && tl.chk && /^\? Check with/.test(tl.word) && /^(JC|MI)\b/.test(tl.label)) C.why.ok(); else C.why.eq([tl.off, tl.chk, tl.off ? /^✗ /.test(tl.word) : tl.word], [info.closed, info.check, info.closed ? true : /^✓ Nursing only$/.test(tl.word) ? tl.word : info.word], label + ' tile "' + tl.label + '" [closed, amber check look, its word]'); }
       });
       // the closed routes of the top tier and above have a tile (a route below the top open tier has none: its pathway chip says so on Results)
       const cardsW = w => M2.cards.filter(c => c.where === w), topOf = pred => { const ts = M2.cards.filter(c => c.kind !== 'arts' && TIER[c.sec] && pred(c)).map(c => TIER[c.sec]); return ts.length ? Math.min(...ts) : 0; };
@@ -1564,10 +1587,10 @@ async function runStudents() {
       C.toolsCount.ass(!!tb && tb.map, label + ' no toolbar with Map on Courses');
       if (tb) {
         C.toolsCount.eq(tb.group.map(x => x.v + (x.on ? '*' : '')), M2.cards.some(c => scope.includes(c.where) && secOk(c.sec) && !(c.sec === 'dppvia' && scope.includes('ite')) && (SPLITSET.has(c.sec) || PFPSET.has(c.sec))) ? ['none*', 'field', 'inst'] : [], label + ' the Group control [None on by default] (shown when a route has a list to group)');
-        C.toolsCount.eq(tb.filter && tb.filter.n, flt.length, label + ' the Filter chip\'s count vs the chips under the bar');
-        C.toolsCount.ass(flt.every(x => x.k === 'field' ? (st.fields || []).includes(x.v) : (st.insts || []).includes(x.v)), label + ' a filter chip for a filter that is not on: ' + JSON.stringify(flt));
+        C.toolsCount.ass(!tb.filter && !flt.length, label + ' no Filter chip or filter chips on Courses, options live on Options');
         C.toolsCount.eq(tb.sticky, 'sticky', label + ' the toolbar sticks under the top bar');
-        C.toolsCount.eq(T.showAll, flt.length > 0, label + ' "Show all" beside the chips');
+        // the button on Options counts what the list holds, by this file's own reading of the rules
+        C.toolsCount.eq(await p.eval(`window.PSE_ATLAS.listCount()`), visibleForCount.filter(c => c.state !== 'no').length, label + ' Show N courses vs the rows the list should hold');
       }
       C.toolsCount.ass(!T.gone.sort && !T.gone.sheetField && !T.gone.sheetInst && !T.gone.gTools, label + ' something took away is still there: ' + JSON.stringify(T.gone)); }
     return true;
@@ -1578,6 +1601,42 @@ async function runStudents() {
     if (await doStudent(st)) usedRandom++;
   }
   for (const pr of PERSONAS) await doStudent(Object.assign({ persona: true, name: pr.id, reach: false, allow: 0 }, pr));
+  // 2.17: RIASEC tags against the engine's copy in data/taxonomy/riasec_courses.csv (read here, not from the page)
+  // a fit on a course the engine is unsure of says "May fit your interests"; a sure course that fits wins
+  { const C17 = check(2, '2.17', 'every card\'s tag (the University Atlas\'s rule) matches its own course\'s RIASEC letters and certainty (data/taxonomy/riasec_courses.csv): "Fits your interests" when a course on it fits and the engine is sure or less sure of it, "May fit your interests" when only unsure ones fit, none otherwise (a JC by its streams); an Options field the same way');
+    const RC = readCsv('data/taxonomy/riasec_courses.csv');
+    const COURSE = Object.fromEntries(RC.map(r => [r.key, r.letters])), UNSURE = new Set(RC.filter(r => r.certainty === 'unsure').map(r => r.key));
+    const STREAM = Object.fromEntries(readCsv('data/taxonomy/riasec_fields.csv').filter(r => /course stream/.test(r.source)).map(r => [r.field_name, r.primary_letters]));
+    // the University Atlas's rule, written here from its words, not copied from the page
+    const fitsO = (letters, code) => !!letters && letters.slice(0, 2).includes(code[0]) && code.filter(l => letters.includes(l)).length >= Math.min(2, code.length, letters.length);
+    const FIELD = {};
+    TAX.filter(r => r.institution_type === 'Polytechnic' || r.institution_type === 'ITE').forEach(r => {
+      const k = (r.institution_type === 'ITE' ? 'ite|' : '') + r.field_of_study, ck = r.institution + '|' + r.course_code, l = COURSE[ck];
+      if (!l) C17.fail('no letters in riasec_courses.csv for ' + ck);
+      (FIELD[k] = FIELD[k] || []).push({ l, unsure: UNSURE.has(ck) });
+    });
+    // '' / 'fit' / 'may' for a set of { l, unsure }
+    const tagFor = (set, code) => set.some(x => !x.unsure && fitsO(x.l, code)) ? 'fit' : set.some(x => fitsO(x.l, code)) ? 'may' : '';
+    const codes = ['IRC', 'SAE', 'ECS', 'AIR', 'RIC', 'CES'];
+    let n = 0;
+    for (const pr of PERSONAS) {
+      const code = codes[n++ % codes.length].split(''), st = Object.assign({ persona: true, name: pr.id, reach: false, allow: 0 }, pr);
+      await loadState(p, Object.assign(stateOf(st), { riasec: code }));
+      const M = await p.eval(MODEL);
+      const { dom } = await expandAndRead(p, ['none']);
+      const tagOn = new Map(dom.filter(d => !d.table).map(d => [d.key, d.tags.includes('Fits your interests') ? 'fit' : d.tags.includes('May fit your interests') ? 'may' : '']));
+      M.cards.forEach(c => {
+        const want = c.kind === 'jc' ? ((c.streams || []).some(s => fitsO(STREAM[s], code)) ? 'fit' : '') : c.kind === 'arts' ? ''
+          : tagFor(c.codes.map((k, i) => (c.insts[i] || c.insts[0]) + '|' + k).map(ck => ({ l: COURSE[ck], unsure: UNSURE.has(ck) })), code);
+        if (c.kind !== 'jc' && c.kind !== 'arts') c.codes.forEach((k, i) => { if (!COURSE[(c.insts[i] || c.insts[0]) + '|' + k]) C17.fail(pr.id + ' ' + c.key + ': no letters for ' + k); });
+        if (tagOn.has(c.key)) C17.eq(tagOn.get(c.key), want, '[' + pr.id + ' ' + code.join('') + '] ' + c.key + ' tag');
+      });
+      await p.eval(`location.hash = '#options'; 1`); await sleep(150);
+      const flds = await p.eval(`[...document.querySelectorAll('#s-options [data-change="field"]')].map(x => ({ k: x.dataset.v, tag: x.parentNode.querySelector('.tag-fit') ? 'fit' : x.parentNode.querySelector('.tag-may') ? 'may' : '' }))`);
+      flds.forEach(f => C17.eq(f.tag, tagFor(FIELD[f.k] || [], code), '[' + pr.id + ' ' + code.join('') + '] Options field ' + f.k));
+      if (!flds.length && pr.where.some(w => w === 'poly' || w === 'ite')) C17.fail(pr.id + ': no field list on Options');
+    }
+  }
   // 4.14: the Group choice applies to every route list on the screen and is kept for the visit (sessionStorage), like the route chips: Field survives a reload and groups the polytechnic list
   // while the JC table stays a table; a new visit starts on None
   { const pg = await openPage(null, { width: 1280, height: 900 }), st = Object.assign({ persona: true, name: 'P5A', reach: false, allow: 0 }, PERSONAS.find(x => x.id === 'P5A'));
@@ -1623,7 +1682,7 @@ async function runStudents() {
 async function check3() {
   const p = await openPage(null, { width: 375, height: 812 });
   await loadState(p, state({ year: 2027, level: 'G3', rows: [] }), '#input');
-  const pageEst = (agg, x, from) => p.eval(`window.PSE_ATLAS.estimate2028(${JSON.stringify(agg)}, ${x}${from ? ', ' + JSON.stringify(from) : ''})`);
+  const pageEst = (agg, x, from, r) => p.eval(`window.PSE_ATLAS.estimate2028(${JSON.stringify(agg)}, ${x}, ${from ? JSON.stringify(from) : 'undefined'}, ${r ? JSON.stringify({ course_name: r.course_name }) : 'undefined'})`);
   const c31 = check(3, '3.1', 'worked examples: L1R4 6->5, 12->10, 20->16; ELR2B2 5->5, 10->9, 15->13, 20->18, 25->22, 26->22 (page function and the rule written here)');
   const ex = [['L1R4(2027)', 6, 5], ['L1R4(2027)', 12, 10], ['L1R4(2027)', 20, 16], ['ELR2B2-B(2027)', 5, 5], ['ELR2B2-B(2027)', 10, 9], ['ELR2B2-B(2027)', 15, 13], ['ELR2B2-B(2027)', 20, 18], ['ELR2B2-B(2027)', 25, 22], ['ELR2B2-B(2027)', 26, 22]];
   for (const [agg, x, want] of ex) {
@@ -1657,11 +1716,11 @@ async function check3() {
       : r.institution_type === 'ITE' && r.admission_route === 'JAE' && FIVE_OLEVEL.includes(r.aggregate_type) ? [['ELMAB3:ITE(2027)', r.aggregate_type]]
       : r.institution_type === 'ITE' && r.admission_route === 'JIEN' ? (r.exercises.filter(e => e[0] === 'PSE-2028').map(e => [e[2], r.aggregate_type])) : [];
     for (const [agg, from] of aggs) {
-      const lo = await pageEst(agg, r.net_range_2026[0], from), hi = await pageEst(agg, r.net_range_2026[1], from);
+      const lo = await pageEst(agg, r.net_range_2026[0], from, r), hi = await pageEst(agg, r.net_range_2026[1], from, r);
       const kind = estKindOf(agg);
-      const rule = r.institution_type === 'JC' ? x => estimateRef('L1R4', x) : r.institution_type === 'MI' ? x => asItIs(x, 20) : r.institution_type === 'Polytechnic' ? x => estimateRef('ELR2B2', x)
+      const rule = r.institution_type === 'JC' ? x => estimateRef('L1R4', x) : r.institution_type === 'MI' ? x => asItIs(x, 20) : r.institution_type === 'Polytechnic' ? x => estimateRef('ELR2B2', x, r)
         : r.admission_route === 'JAE' ? fiveSubjectEstimate : x => asItIs(x);
-      const cap = r.institution_type === 'JC' ? 16 : r.institution_type === 'MI' ? 20 : r.institution_type === 'Polytechnic' ? 22 : 1e9;
+      const cap = r.institution_type === 'JC' ? 16 : r.institution_type === 'MI' ? 20 : r.institution_type === 'Polytechnic' ? (r.course_name === 'Nursing' ? 24 : 22) : 1e9;
       c33.ass(lo >= 1 && hi <= cap && lo <= hi && lo === rule(r.net_range_2026[0]) && hi === rule(r.net_range_2026[1]), r.id + ' ' + agg + ' ' + JSON.stringify(r.net_range_2026) + ' -> ' + lo + '-' + hi + ' (cap ' + cap + ')');
       r.institution_type === 'JC' ? jcN++ : r.institution_type === 'MI' ? miN++ : r.institution_type === 'Polytechnic' ? polyN++ : iteN++;
     }
@@ -1904,7 +1963,7 @@ function shareFacts(c, st, eng) {
   if (c.kind === 'pfp') {
     // FIX_r3 items 11 and 14: the PFP line is the same in both years; a 2028 PFP card has no 'can apply' state, so "you meet" is the engine's eligibility of every diploma on the card
     const pfpMeets = first.er.exercise === 'PSE-2028' ? pfpMeetsAll(c, first.er, eng) : ['yes', 'cond'].includes(first.x.state);
-    if (pfpMeets) f.range = 'Polytechnic Foundation Programme: you meet the entry requirements. PFP has no cut-offs.';
+    if (pfpMeets) f.range = 'Polytechnic Foundation Programme: you meet the entry requirements, but this does not guarantee a place. Places go by merit.';
     if (first.x.net.value != null) f.net = 'Your gross ' + agg + ': ' + first.er.gross;
     return f;
   }
@@ -1960,7 +2019,9 @@ async function shareScenario(p, sc, c64, c65) {
     });
     // compare line by line; the free wording of the state and affiliation / LEP notes is matched by pattern
     const got = R.text.split('\n');
-    const want = lines;
+    // once public, the message ends with the app's address
+    const LIVE = ((PAGE_EXTRA || {}).ops || {}).url;  // the online page's address, from the page's own data
+    const want = LIVE ? lines.concat(['', 'Student Pathway Atlas: ' + LIVE]) : lines;
     let gi = 0;
     const eq = (a, b, msg) => sc.c.ass(a === b, tag + msg + ': page "' + a + '" want "' + b + '"');
     want.forEach((w, wi) => {
@@ -2360,7 +2421,7 @@ async function check7() {
       const polyLine = (() => { const nets = nets7.map(r => r.net), by = []; ['A', 'B', 'C', 'D'].forEach((k, i) => { const g = by.find(y => y.v === nets[i]); if (g) g.k.push(k); else by.push({ v: nets[i], k: [k] }); });
         const grosses = nets7.map(r => r.gross); return by.length === 1 && grosses.every(v => v === grosses[0]) ? netLine('ELR2B2', nets7[0]) : 'Your net ELR2B2: ' + by.map(y => y.v + ' (' + y.k.join(', ') + ')').join(' · '); })();
       c72.eq(ov.rows.map(r => [r.label, r.n, r.title, /^✓ open/.test(r.word), r.lines]), [[jcMi + ' · L1R4', String(l.net), '', jcOk, jcOk ? [netLine('L1R4', l)] : ov.rows[0] && ov.rows[0].lines],
-        ['Poly · ELR2B2', String(nets7[0].net), '', true, [polyLine]], ['PFP · ELMAB3', String(pf.gross), '', pfOk, pfOk ? ['Your gross ELMAB3: ' + pf.gross + ' (PFP needs 12 or better)'] : ov.rows[2] && ov.rows[2].lines]], 'the aggregate tiles [label, number, title, open, pop-over lines]');
+        ['Poly · ELR2B2', String(nets7[0].net), '', true, [polyLine]], ['PFP · ELMAB3', String(pf.gross), '', pfOk, pfOk ? ['Your gross ELMAB3: ' + pf.gross + ' (PFP needs 12 or better)', 'MOE also needs grade 3 or better at G2 in English, Math and one relevant subject, and grade 4 or better in two other subjects.'] : ov.rows[2] && ov.rows[2].lines]], 'the aggregate tiles [label, number, title, open, pop-over lines]');
       // "Your pathways": the courses within reach are those 2 or more points better (Within reach) plus those within 1 point (Borderline); PFP has no cut-offs, so every course it can apply for
       const jcN = new Set(['Arts', 'Science'].flatMap(st2 => jcTable(Fx7, 'pjc', st2).filter(x => x.o.x.n >= -1).map(x => x.c.title))).size;
       const polyN = Fx7.cards.filter(c => c.sec === 'ppoly' && c.offs[0].x.state !== 'no' && (c.offs[0].x.n == null || c.offs[0].x.n >= -1)).length, pfpN = M.cards.filter(c => c.sec === 'ppfp' && c.state !== 'no').length;
@@ -2403,6 +2464,7 @@ async function check7() {
     c72.eq(await p.eval(`document.querySelectorAll('section.pathways a, [data-do="path-go"]').length`), 0, 'pathway links on the Results screen');
     for (let i = 0; i < 1; i++) {
       await p.eval(`location.hash = '#input'; 1`); await sleep(200);
+      await p.eval(`document.querySelector('#bar [data-do="go-options"]').click(); 1`); await sleep(200);
       await p.eval(`document.querySelector('#bar [data-do="show"]').click(); 1`); await sleep(300);
       c72.eq(await p.eval(`JSON.stringify(window.PSE_ATLAS.state().where)`), before, 'Where after "Show my courses"');
       // the shown chips are the two picked routes; the dashed ones are the other open routes (the route chips replace the old "picked routes" filter chips)
@@ -2435,8 +2497,13 @@ async function check7() {
     const xs = want.map(c => { const er = eng.results.get(c.offers[0].r.exercise + '|' + c.offers[0].r.requirement_key); return { c, x: offerOracle(er, st, eng) }; });
     const tallyX = list => list.reduce((a, e) => { if (e.x.state !== 'no' && e.x.n != null) { if (e.x.n >= 2) a[0]++; else if (e.x.n >= -1) a[1]++; } return a; }, [0, 0]);
     const T0 = reads[0].counts.top;
-    c74.eq(T0.fchips.map(f => f.k + ':' + f.v).sort(), ['field:Engineering', 'inst:Ngee Ann Polytechnic', 'inst:Singapore Polytechnic'], 'the filter chips under the bar');
-    c74.eq([T0.fchips.length, T0.tbar && T0.tbar.filter && T0.tbar.filter.n, T0.showAll], [3, 3, true], 'filter chips, the Filter chip\'s number, "Show all"');
+    // the ticks live on Options; its tab's number and its button are the same number, and that number is what the list holds
+    { await p.eval(`location.hash = '#options'; 1`); await sleep(200);
+      const O = await p.eval(`({ ticks: [...document.querySelectorAll('[data-change="field"]:checked, [data-change="inst"]:checked')].map(x => x.dataset.v).sort(), tab: Number((document.querySelector('#tabs .tab[href="#options"] .tab-n') || {}).textContent), btn: Number((/\\d+/.exec(document.querySelector('#bar [data-do="show"]').textContent) || [])[0]), clear: !!document.querySelector('#s-options [data-do="clear-filters"]') })`);
+      c74.eq(O.ticks, ['Engineering', 'Ngee Ann Polytechnic', 'Singapore Polytechnic'], 'the ticks on Options');
+      c74.eq(O.tab, O.btn, 'the number on the Options tab vs its button');
+      c74.ass(O.clear, 'Clear options on Options while options are on');
+      await p.eval(`location.hash = '#courses'; 1`); await sleep(200); }
     const sec0 = reads[0].counts.secs.find(x => x.id === 'poly');
     c74.eq(sec0 && sec0.band, tallyX(xs), 'the band of Polytechnic Year 1 [within reach, borderline]');
     reads.forEach(rd => {
@@ -2500,7 +2567,7 @@ async function check7() {
     const d = new Date(SNAPSHOT + 'T12:00:00Z');
     c77.ass(ab.open, 'the "i" does not open About');
     c77.ass(ab.text.indexOf(d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear()) >= 0, 'About does not name the snapshot date ' + SNAPSHOT + ': "' + ab.text.slice(0, 160) + '"');
-    [/Not an MOE app/, /About these numbers/, /Saved on this device only/, /CourseFinder and SchoolFinder/].forEach(re => c77.ass(re.test(ab.text), 'About lacks ' + re + ': "' + ab.text.slice(0, 200) + '"'));
+    [/Not an MOE app/, /About these numbers/, /stay on this device until you tap Start again/, /CourseFinder and SchoolFinder/].forEach(re => c77.ass(re.test(ab.text), 'About lacks ' + re + ': "' + ab.text.slice(0, 200) + '"'));
     c77.ass(ab.links.filter(l => /moe\.gov\.sg/.test(l)).length >= 2, 'About has fewer than two MOE links (MOE\'s table and MOE\'s note): ' + JSON.stringify(ab.links));
     c77.ass(ab.label.length > 0, 'the "i" button has no label');
     await p.eval(`(document.querySelector('#sheet [data-do="sheet-close"]') || { click() {} }).click(); 1`); await sleep(80);
@@ -2535,20 +2602,19 @@ async function check46() {
     const st = state({ year: sc.year, level: sc.level, cca: 'Good', where: sc.where, rows: subs[sc.level].map(x => row(...x)), reach: true });
     await loadState(p, st, '#courses');
     const tag = sc.n + ': ';
-    // the Filter sheet behind the toolbar holds the Field list and the Institution list (the old Field and Institution sheets are gone)
-    await p.eval(`document.querySelector('[data-do="sheet-filter"]').click(); 1`); await sleep(120);
-    const legends = await p.eval(`[...document.querySelectorAll('#sheet fieldset.inst-group')].map(f => ({ name: f.querySelector('legend').textContent, items: [...f.querySelectorAll('li label span[data-wc="0"]')].map(x => x.textContent) }))`);
+    // Options holds the Field lists and the Institution lists
+    await p.eval(`location.hash = '#options'; 1`); await sleep(150);
+    const legends = await p.eval(`[...document.querySelectorAll('#s-options details.inst-group')].map(f => ({ name: f.querySelector('summary').firstChild.textContent.trim(), items: [...f.querySelectorAll('li label span[data-wc="0"]')].map(x => x.textContent) }))`);
     legends.forEach(g => {
       c.ass(sc.allowedLegends.includes(g.name), tag + 'the Filter sheet has an institution group for a route that was not picked: "' + g.name + '"');
       if (g.name === 'Polytechnics') { const bad = g.items.filter(x => !POLYS.has(x)); c.ass(!bad.length, tag + 'the Filter sheet lists ' + bad.join(', ') + ' under Polytechnics'); }
       if (g.name === 'Junior colleges') { const bad = g.items.filter(x => !JCS.has(x)); c.ass(!bad.length, tag + 'the Filter sheet lists ' + bad.join(', ') + ' under Junior colleges'); }
     });
-    const heads = await p.eval(`[...document.querySelectorAll('#sheet .fs-h')].map(x => x.textContent.trim())`);
-    c.eq(heads, ['Field', 'Institution'], tag + 'the Filter sheet\'s two parts');
-    const fields = await p.eval(`[...document.querySelectorAll('#sheet .sheet-body > ul.checklist li label')].map(x => x.textContent.replace(/\\s+\\d+$/, '').trim())`);
+    const heads = await p.eval(`[...document.querySelectorAll('#s-options .q-h')].map(x => x.textContent.trim())`);
+    c.ass(heads.includes('Which institutions?') && heads.includes('What interests you?'), tag + 'Options parts: ' + heads.join(', '));
+    const fields = await p.eval(`[...document.querySelectorAll('#s-options [data-change="field"]')].map(x => x.dataset.v.replace(/^ite\\|/, ''))`);
     const leak = fields.filter(f => ITE_ONLY_FIELDS.has(f));
     c.ass(fields.length > 0 && !leak.length, tag + 'the Field list offers ITE-only fields although ITE was not picked: ' + leak.join(', '));
-    await p.eval(`(document.querySelector('#sheet [data-do="sheet-close"]')||{click(){}}).click(); 1`); await sleep(80);
     // the map
     await p.eval(`location.hash = '#map'; 1`); await sleep(200);
     const mapNames = await p.eval(`[...document.querySelectorAll('.inst-list .inst-btn span[data-wc="0"]')].map(x => x.textContent)`);

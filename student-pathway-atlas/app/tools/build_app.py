@@ -25,7 +25,9 @@ import csv
 import json
 import os
 import re
+import subprocess
 import sys
+import tempfile
 from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -45,13 +47,19 @@ EXERCISES_CSV = os.path.join(ROOT, "data", "exercises", "exercises_%s.csv" % SNA
 TAXONOMY_CSV = os.path.join(ROOT, "data", "taxonomy", "course_taxonomy_%s.csv" % SNAPSHOT)
 TERMS_CSV = os.path.join(ROOT, "data", "calendar", "school_terms.csv")
 FILLS_CSV = os.path.join(ROOT, "data", "calendar", "exercise_date_fills.csv")
-RIASEC_CSV = os.path.join(ROOT, "data", "taxonomy", "riasec_fields.csv")
+RIASEC_CSV = os.path.join(ROOT, "data", "taxonomy", "riasec_fields.csv")  # JC and MI streams: our own suggestion
+RIASEC_COURSES_CSV = os.path.join(ROOT, "data", "taxonomy", "riasec_courses.csv")  # every poly and ITE course's own letters, from a RIASEC engine that is not in this folder
+RIASEC_SOURCE_JSON = os.path.join(ROOT, "data", "taxonomy", "riasec_source.json")  # which letters those hold
+OPS_PAGE = os.path.join(APP, "src", "ops")  # analytics and Report a bug, which run only on the online page's own address
 ARTS_CSV = os.path.join(ROOT, "data", "locations", "arts_institutions_2027.csv")
 SUBJECT_LEVELS_CSV = os.path.join(ROOT, "data", "taxonomy", "subjects_by_level.csv")
 
 HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
-# D16 / N14: words the built page must never contain (case-insensitive)
 FORBIDDEN = re.compile(r"[/\\](?:Users|home)[/\\]\w")  # a local path must never reach the page
+# The rule data's working notes: where each rule came from in our files, and what we asked or decided. The engine and the page
+# never read them, so the page's copy goes without (check_clean_data proves the answers don't change).
+NOTE_KEYS = {"file", "heading", "open_questions"}  # anywhere in the rule data
+DEF_NOTE_KEYS = {"notes", "note", "source_vintage", "provisional", "rationale"}  # in definitions only
 
 
 
@@ -128,8 +136,37 @@ def calendar():
 
 
 def riasec():
-    """The letters -> field table (our suggestion, from Holland's type descriptions; labelled so on the page)."""
-    return [{"field": r["field_name"], "letters": r["primary_letters"]} for r in read_csv(RIASEC_CSV)]
+    """Each poly and ITE course's own letters (data/taxonomy/riasec_courses.csv, made by the RIASEC engine), keyed institution|course code;
+    a JC or MI stream keeps our suggestion from Holland's type descriptions. msf says which letters a job's come from, so the sheet's words follow.
+    unsure: the courses the engine is unsure of (two or more warning signs), tagged "May fit" instead of "Fits"."""
+    rows = read_csv(RIASEC_COURSES_CSV)
+    courses = {r["key"]: r["letters"] for r in rows}
+    unsure = sorted(r["key"] for r in rows if r["certainty"] == "unsure")
+    streams = {r["field_name"]: r["primary_letters"] for r in read_csv(RIASEC_CSV) if "course stream" in r["source"]}
+    if not courses or not streams:
+        die("RIASEC letters missing: data/taxonomy/riasec_courses.csv needs the RIASEC engine")
+    # a field holds its courses' letters (poly and ITE apart), so the page tags a field when a course in it fits;
+    # fields_may holds the letters only unsure courses have, so a field with no other fitting course says "May fit"
+    d = json.loads(read(DATA_JSON))
+    fields, may = {}, {}
+    for x in d["courses"]["rows"]:
+        r = dict(zip(d["courses"]["columns"], x))
+        if r["institution_type"] in ("Polytechnic", "ITE") and r["field_of_study"]:
+            k = r["institution"] + "|" + r["course_code"]
+            if k not in courses:
+                die("no RIASEC letters for %s: data/taxonomy/riasec_courses.csv needs the RIASEC engine" % k)
+            f = (may if k in unsure else fields).setdefault(("ite" if r["institution_type"] == "ITE" else "poly") + "|" + r["field_of_study"], [])
+            if courses[k] not in f:
+                f.append(courses[k])
+    may = {fk: [l for l in ls if l not in fields.get(fk, [])] for fk, ls in may.items()}
+    return {"courses": courses, "unsure": unsure, "fields": fields, "fields_may": {fk: ls for fk, ls in may.items() if ls},
+            "streams": streams, "msf": json.loads(read(RIASEC_SOURCE_JSON))["msf"]}
+
+
+def ops_config():
+    """Where the page may send analytics. This copy lists no address, so it sends nothing anywhere and shows no analytics controls.
+    url: the online page, which the share message ends with."""
+    return {"project": "", "hosts": [], "url": "https://pathway.dataiskoo.sg"}
 
 
 def subject_levels():
@@ -271,6 +308,69 @@ def check_core_ranges(core_path, data_path):
     print("  engine check: %d course results on 3 made-up students; no PFP or PSE 2028 range" % res["n"])
 
 
+# ------------------------------------------------------------------------------------------------- what a visitor can read
+def without_notes(d):
+    """The page's copy of the rule data, without our working notes (NOTE_KEYS, DEF_NOTE_KEYS). Each key stays, emptied, so the data
+    keeps its shape: the engine copies some (a 5th-year summary's open_questions) and asks whether a source is there at all."""
+    empty = {str: "", list: [], dict: {}}
+    def drop(o, keys):
+        if isinstance(o, dict):
+            return {k: (empty.get(type(v), v) if k in keys else drop(v, keys)) for k, v in o.items()}
+        return [drop(v, keys) for v in o] if isinstance(o, list) else o
+    out = dict(d)
+    out["definitions"] = drop(d["definitions"], NOTE_KEYS | DEF_NOTE_KEYS)
+    for x in out["definitions"].get("definitions", []):
+        if x.get("stub_reason"):  # the engine copies it into its answer: keep the reason, without the bracket that says where we met it
+            x["stub_reason"] = re.sub(r"\s*\([^()]*\)$", "", x["stub_reason"])
+    out["requirements"] = drop(d["requirements"], NOTE_KEYS)
+    return out
+
+
+CLEAN_CHECK_JS = r"""
+const PSE = require(process.argv[1]), fs = require('fs');
+const full = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')), clean = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+const DROP = new Set(JSON.parse(process.argv[4]));
+const norm = o => Array.isArray(o) ? o.map(norm) : o && typeof o === 'object' ? Object.keys(o).sort().filter(k => !DROP.has(k)).reduce((a, k) => (a[k] = norm(o[k]), a), {}) : o;
+const run = data => { PSE.load(data); return JSON.stringify(norm(STUDENTS.map(([rows, year, bonus]) => {
+  const subjects = rows.map(r => ({subject: r[0], level: r[1], grade: r[2], year}));
+  return [PSE.checkInputs(subjects), PSE.computeAll(subjects, bonus), PSE.match(subjects, bonus)];
+}))); };
+const STUDENTS = JSON.parse(process.argv[5]);
+const a = run(full), b = run(clean);
+console.log(JSON.stringify({same: a === b, n: a.length}));
+"""
+CLEAN_STUDENTS = [
+    [[["English Language", "O", "B3"], ["Mathematics", "O", "B4"], ["Science (Physics, Chemistry)", "O", "C5"], ["Humanities (Social Studies, Geography)", "O", "C6"], ["Chinese", "O", "A2"], ["Principles of Accounts", "O", "B3"], ["Art", "O", "A2"]], 2026, {"cca": "Good"}],
+    [[["English Language", "O", "A1"], ["Higher Chinese", "O", "A2"], ["Chinese", "O", "A1"], ["Mathematics", "O", "A1"], ["Additional Mathematics", "O", "A2"], ["Physics", "O", "B3"], ["Chemistry", "O", "A2"], ["Literature in English", "O", "B4"]], 2026, {"cca": "Excellent", "affiliated_jc": True}],
+    [[["English Language", "N(A)", "2"], ["Mathematics", "N(A)", "3"], ["Science (Physics, Chemistry)", "N(A)", "2"], ["Humanities (Social Studies, Geography)", "N(A)", "3"], ["Principles of Accounts", "N(A)", "1"], ["Tamil", "N(A)", "2"]], 2026, {"cca": "Excellent"}],
+    [[["English Language", "N(T)", "B"], ["Mathematics", "N(T)", "A"], ["Science", "N(T)", "B"], ["Computer Applications", "N(T)", "A"], ["Basic Malay", "N(T)", "C"]], 2026, {"cca": "Fair"}],
+    [[["English Language", "G3", "B3"], ["Mathematics", "G3", "B4"], ["Science (Physics, Chemistry)", "G3", "C5"], ["History", "G3", "C6"], ["Geography", "G2", "1"], ["Tamil", "G2", "2"]], 2027, {"cca": "Good"}],
+    [[["English Language", "G2", "3"], ["Mathematics", "G1", "B"], ["Science", "G2", "4"], ["Humanities (Social Studies, History)", "G2", "5"], ["Malay", "G1", "A"]], 2027, {"cca": "Poor"}],
+]
+
+
+def check_clean_data(full, clean):
+    """The engine's answers for six students, with the full rule data and with the page's copy, are the same once the notes are set aside."""
+    node = os.environ.get("NODE", "node")
+    paths = []
+    for d in (full, clean):
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+            json.dump(d, f)
+        paths.append(f.name)
+    try:
+        out = subprocess.run([node, "-e", CLEAN_CHECK_JS, CORE, paths[0], paths[1], json.dumps(sorted(NOTE_KEYS | DEF_NOTE_KEYS | {"sources", "not_computable_reason"})),
+                              json.dumps(CLEAN_STUDENTS)], capture_output=True, text=True)
+    finally:
+        for p in paths:
+            os.unlink(p)
+    if out.returncode != 0:
+        die("the clean-data check failed to run: " + out.stderr.strip()[:400])
+    res = json.loads(out.stdout.strip().splitlines()[-1])
+    if not res["same"]:
+        die("the engine answers differently without the rule data's notes: a key in NOTE_KEYS or DEF_NOTE_KEYS is read")
+    print("  rule data: our notes left out of the page; the engine's answers for %d students are unchanged" % len(CLEAN_STUDENTS))
+
+
 # ------------------------------------------------------------------------------------------------- checks
 def check_sources(app_js, app_css, shell):
     for name, src in (("app.css", app_css), ("app.js", app_js)):
@@ -295,6 +395,40 @@ def version_of(app_js):
         die("APP_VERSION not found in app.js")
     return m.group(1), m.group(2), m.group(3)
 
+
+def fixed_links(pse_data):
+    """Republic Polytechnic moved its course pages, and MOE's CourseFinder still carries the old addresses (read 2 Nov 2026). data/course_link_fixes.csv says old -> new, each new one opened and checked. The engine never reads these strings."""
+    path = os.path.join(ROOT, "data", "course_link_fixes.csv")
+    text = json.dumps(pse_data, ensure_ascii=False)
+    with open(path, encoding="utf-8-sig") as f:
+        fixes = list(csv.DictReader(f))
+    for r in fixes:
+        if r["old"] not in text:
+            die("course_link_fixes.csv: %s is not in the data any more" % r["old"])
+        text = text.replace('"%s"' % r["old"], '"%s"' % r["new"])
+    print("  course links: %d fixed" % len(fixes))
+    return json.loads(text)
+
+def day_in_life():
+    """A day in the life: data/day_in_life_videos.json lists the videos; data/day_in_life_map.json says which job fits which of this app's courses. A job, code or name that has gone stops the build."""
+    all_videos = json.loads(read(os.path.join(ROOT, "data", "day_in_life_videos.json")))["videos"]
+    jobs = json.loads(read(os.path.join(ROOT, "data", "day_in_life_map.json")))["jobs"]
+    with open(TAXONOMY_CSV, encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
+    poly = set(r["course_code"] for r in rows if r["institution_type"] == "Polytechnic")
+    ite = set(re.sub(r"^Higher Nitec in | \(\d Years\)$", "", r["course_name"]) for r in rows if r["institution_type"] == "ITE")
+    by_job = dict((v["job"], v) for v in all_videos)
+    out = []
+    for job, m in jobs.items():
+        if job not in by_job:
+            die("day_in_life_map.json: no video for the job %s" % job)
+        for c in m.get("poly", []):
+            if c not in poly: die("day_in_life_map.json: %s points at %s, not a Polytechnic course" % (job, c))
+        for c in m.get("ite", []):
+            if c not in ite: die("day_in_life_map.json: %s points at %s, not an ITE course" % (job, c))
+        out.append(dict(id=by_job[job]["id"], job=job, poly=m.get("poly", []), ite=m.get("ite", [])))
+    years = sorted(v["date"][:4] for v in all_videos)
+    return out, "Videos of some jobs this course can lead to, among others. On My Way, by the National Youth Council, %s to %s." % (years[0], years[-1])
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
@@ -328,8 +462,14 @@ def main(argv=None):
     pse_data = engine_data(args.dev)
     if not args.dev:
         check_core_ranges(CORE, DATA_JSON)
-    page_data = {"built": date.today().isoformat(), "snapshot": SNAPSHOT, "institutions": institutions(),
-                 "coast": coast(), "schools": secondary_schools(), "calendar": calendar(), "riasec": riasec(),
+    pse_data = fixed_links(pse_data)
+    if not args.dev:
+        clean = without_notes(pse_data)
+        check_clean_data(pse_data, clean)
+        pse_data = clean
+    videos, videos_by = day_in_life()
+    page_data = {"videos": videos, "videos_by": videos_by, "built": date.today().isoformat(), "snapshot": SNAPSHOT, "institutions": institutions(),
+                 "coast": coast(), "schools": secondary_schools(), "calendar": calendar(), "riasec": riasec(), "ops": ops_config(),
                  "arts": arts(), "subject_levels": subject_levels()}
     if not isinstance(pse_data.get("courses"), dict):
         page_data["poly_schools"] = poly_schools()  # the compact data.json carries faculty_or_school itself
@@ -337,32 +477,36 @@ def main(argv=None):
     print("  page data: %d institutions, %d secondary schools (%d with an affiliated JC), calendar %d terms + %d fills "
           "+ %d current exercise rows, %d RIASEC rows, %d arts rows" % (
               len(page_data["institutions"]), len(page_data["schools"]), sum(1 for s in page_data["schools"] if s[1]),
-              len(cal["terms"]), len(cal["fills"]), len(cal["rows"]), len(page_data["riasec"]), len(page_data["arts"])))
+              len(cal["terms"]), len(cal["fills"]), len(cal["rows"]), len(page_data["riasec"]["courses"]), len(page_data["arts"])))
+    print("  a day in the life: %d of the jobs, on %d Poly courses and %d ITE courses" % (len(videos), len(set(c for v in videos for c in v["poly"])), len(set(c for v in videos for c in v["ite"]))))
     print("  subjects by level: %s" % ("%d subject x year rows from data/taxonomy/subjects_by_level.csv" % len(page_data["subject_levels"])
                                       if page_data["subject_levels"] else "file missing: app.js uses the stated table"))
     if "lep_hosts" in pse_data:
         print("  engine data: lep_hosts present (%d rows)" % len(pse_data.get("lep_hosts") or []))
 
-    style = "<style>\n%s\n%s\n%s\n</style>" % (font_face(), tokens, app_css)
+    ops_js = open(os.path.join(OPS_PAGE, "ops_page.js"), encoding="utf-8").read()
+    ops_css = open(os.path.join(OPS_PAGE, "ops_page.css"), encoding="utf-8").read()
+    style = "<style>\n%s\n%s\n%s\n%s\n</style>" % (font_face(), tokens, ops_css, app_css)
     scripts = "\n".join([
         '<script type="application/json" id="pse-data">%s</script>'
         % json_safe(json.dumps(pse_data, separators=(",", ":"), ensure_ascii=False)),
         '<script type="application/json" id="page-data">%s</script>'
         % json_safe(json.dumps(page_data, separators=(",", ":"), ensure_ascii=False)),
+        "<script>\n%s\n</script>" % js_safe(ops_js),
         "<script>\n%s\n</script>" % js_safe(core),
         "<script>\n%s\n</script>" % js_safe(app_js),
     ])
     if "<!--@STYLE-->" not in shell or "<!--@SCRIPTS-->" not in shell:
         die("the shell is missing <!--@STYLE--> or <!--@SCRIPTS-->")
     html = shell.replace("<!--@STYLE-->", style).replace("<!--@SCRIPTS-->", scripts)
-    hit = FORBIDDEN.search(html)
-    if hit:
-        die("the built page names %r (D16 / N14): %s" % (hit.group(0), html[max(0, hit.start() - 80):hit.end() + 40]))
+    hit = FORBIDDEN.search(json.dumps(pse_data, ensure_ascii=False) + json.dumps(page_data, ensure_ascii=False))
+    if hit and not args.dev:
+        die("the page's data says %r, which a visitor must never read" % hit.group(0))
 
     if args.dev:
         out = os.path.join(FIX, "dev.html")
     else:
-        out = os.path.join(APP, "dist", "Student Pathway Atlas %s.html" % short)
+        out = os.environ.get("PSE_OUT") or os.path.join(APP, "dist", "Student Pathway Atlas %s.html" % short)
         os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)

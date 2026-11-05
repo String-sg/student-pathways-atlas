@@ -39,7 +39,7 @@ try {
       [...document.querySelectorAll('.srow-open')].slice(0, 2).forEach(b => b.click()); await W(300);
       res.subjects = __scan();
       location.hash = 'courses'; await W(700); res.courses = __scan();
-      const f = document.querySelector('[data-do="sheet-filter"]'); if (f) { f.click(); await W(300); res.filter = __scan(); const x = document.querySelector('#sheet [data-do="sheet-close"]'); x && x.click(); await W(200); }
+      location.hash = '#options'; await W(300); res.filter = __scan(); location.hash = '#courses'; await W(300);
       const c = document.querySelector('#s-list .cc-main'); if (c) { c.click(); await W(600); res.details = __scan(); }
       location.hash = 'starred'; await W(500); res.starred = __scan();
       location.hash = 'dates'; await W(500); res.dates = __scan();

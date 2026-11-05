@@ -1,0 +1,12 @@
+/* analytics and the bug report: on the first screen, and in the Information sheet */
+.ufoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp-2)}
+.ufoot .urec{display:contents}
+.ufoot .hint{order:-1;flex:1 1 100%;margin-top:0}
+.urec-r{display:flex;align-items:center;gap:var(--sp-2)}
+.urec-k{font-weight:var(--fw-2)}
+.urec .seg{flex:0 0 6rem}
+.urec .seg-btn{min-height:40px}
+#sheet .urec{margin:var(--sp-3) 0 var(--sp-2)}
+.ubug-t{display:block;padding:var(--sp-1) var(--sp-2);margin-top:var(--sp-1);resize:vertical}
+#bug-mail{margin-top:var(--sp-1)}
+.ubug-l{display:block;margin-top:var(--sp-3)}
