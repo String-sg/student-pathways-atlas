@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f5f7">
+<title>Post-Secondary Pathway Explorer</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="Pathways">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&text=0123456789&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip-link" href="#subjects">Skip to subjects</a>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">For students sitting the Singapore-Cambridge Secondary Education Certificate (SEC) from 2028</div>
+      <h1><img class="brand" src="icon.svg" alt="" width="44" height="44">Post-Secondary Pathway Explorer</h1>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-btns">
+        <button type="button" class="ov-open" id="ovOpen" aria-haspopup="dialog" aria-controls="ov">Overview of Post&#8209;Secondary Admissions</button>
+        <button type="button" class="gl-open" id="glOpen" aria-haspopup="dialog" aria-controls="gl" title="Glossary of terms"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v15H6.5A2.5 2.5 0 0 0 4 20.5 2.5 2.5 0 0 0 6.5 23H19v-5"/><path d="M8 7h7M8 11h5"/></svg><span>Glossary</span></button>
+      </div>
+      <div class="legend" aria-label="Colour key">
+        <span class="pill p-ok term" tabindex="0" role="button" aria-expanded="false" aria-label="Eligible: minimum entry requirements met. Not a guaranteed place in a course."><i></i>Eligible<span class="pop" role="tooltip">Minimum entry requirements met. Not a guaranteed place in a course.</span></span>
+        <span class="pill p-amber"><i></i>Possible, with conditions</span>
+        <span class="pill p-bad"><i></i>Not eligible</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel" id="subjects" aria-labelledby="subj-h">
+      <div class="panel-h">
+        <div><h2 id="subj-h">Subjects</h2><p>Set each subject's level and result to see the pathways.</p></div>
+        <div class="panel-btns">
+          <button type="button" class="reset" id="save" title="Keep these grades on this device, even after a refresh">Save Grades</button>
+          <button type="button" class="reset" id="reset">Reset</button>
+        </div>
+      </div>
+      <div class="panel-b">
+        <div class="subs" id="rows"></div>
+        <div class="subject-footer">
+        <div class="counts" aria-label="Passes by level">
+          <div class="count"><b id="c3">0</b><span>passed at G3</span></div>
+          <div class="count"><b id="c2">0</b><span>passed at G2</span></div>
+          <div class="count"><b id="c1">0</b><span>passed at G1</span></div>
+        </div>
+        <div class="subject-notes">
+        <div class="em" id="em" aria-live="polite"></div>
+        <p class="hint">A G3 pass also counts as a G2 or G1 subject.</p>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="results" id="results" aria-label="Pathway eligibility results">
+      <p class="sr-only" id="resultStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+      <section class="group g-ok" aria-labelledby="ok-h">
+        <div class="group-h"><h2 id="ok-h">Eligible or can apply</h2><span class="n" id="okN">0</span></div>
+        <div class="cards" id="okCards"></div>
+      </section>
+      <section class="group g-bad" aria-labelledby="bad-h">
+        <div class="group-h"><h2 id="bad-h">Not eligible</h2><span class="n" id="badN">0</span></div>
+        <div class="cards" id="badCards"></div>
+      </section>
+    </main>
+  </div>
+
+  <section class="ref" aria-label="Grade reference">
+    <div>
+      <h3>G3 to G2 conversion</h3>
+      <table>
+        <thead><tr><th>G3 grade</th><th>A1 · A2 · B3</th><th>B4 · C5 · C6</th><th>D7</th><th>E8</th><th>9</th></tr></thead>
+        <tbody><tr><th>G2 grade</th><td>1</td><td>2</td><td>3</td><td>4</td><td>Cannot be used as a G2 pass</td></tr></tbody>
+      </table>
+    </div>
+    <div>
+      <h3>What counts as a pass</h3>
+      <table>
+        <thead><tr><th>Level</th><th>Pass</th><th>Fail</th></tr></thead>
+        <tbody>
+          <tr><th>G3</th><td>A1 to C6 (50% and above)</td><td>D7, E8, 9 (below 50%)</td></tr>
+          <tr><th>G2</th><td>Grade 1 to 5 (50% and above)</td><td>Grade 6 (below 50%)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>This is an unofficial guide, based on MOE's 2028 post-secondary pathways chart and its summary of admissions criteria. It shows only whether a student meets the minimum requirements. Entry into a specific course also depends on its cut-off point, its subject requirements and competition for places. For official information, refer to the <a href="https://www.moe.gov.sg/post-secondary/admissions/pse" target="_blank" rel="noopener">MOE Post-Secondary Admissions Exercise</a>, and for specific course requirements, <a href="https://www.moe.gov.sg/coursefinder" target="_blank" rel="noopener">MOE CourseFinder</a>.</p>
+    <p class="legal">&copy; 2026 Mathew Lim <span class="exp">Experimental app</span></p>
+  </footer>
+</div>
+
+
+<dialog class="ov" id="ov" aria-labelledby="ovTitle">
+  <div class="ov-inner">
+    <button type="button" class="ov-close" id="ovClose" aria-label="Close">&times;</button>
+    <h2 id="ovTitle">Overview of <span>Post-Secondary Admissions</span></h2>
+    <p class="ov-hint">Swipe sideways to see all pathways →</p>
+    <div class="ov-scroll" tabindex="0" role="region" aria-label="Pathway overview table. Scroll sideways to see all pathways.">
+      <table class="ovt">
+        <thead>
+          <tr class="band"><th class="corner"></th><th colspan="8">POST-SEC PATHWAYS</th></tr>
+          <tr><th class="corner">Students taking<br>at least</th><th scope="col"><a href="https://www.moe.gov.sg/post-secondary/admissions/pse/ite-3-year-higher-nitec" target="_blank" rel="noopener">3-Year<br>Higher<br>Nitec</a></th><th scope="col"><a href="https://www.moe.gov.sg/post-secondary/admissions/pse/ite-2-year-higher-nitec" target="_blank" rel="noopener">2-Year<br>Higher<br>Nitec</a></th><th scope="col"><a href="https://www.nafa.edu.sg/admissions/foundation-admissions" target="_blank" rel="noopener">NAFA<br>Foundation<br>Programme<small>(NFP)</small></a></th><th scope="col"><a href="https://www.lasalle.edu.sg/study/admissions/diploma-admissions/" target="_blank" rel="noopener">Arts<br>Institutions</a></th><th scope="col"><a href="https://www.moe.gov.sg/post-secondary/admissions/pse/pfp" target="_blank" rel="noopener">Polytechnic<br>Foundation<br>Programme<small>(PFP)</small></a></th><th scope="col"><a href="https://www.moe.gov.sg/post-secondary/admissions/pse/polytechnic-diploma-course" target="_blank" rel="noopener">Polytechnic<br>Year 1</a></th><th scope="col"><a href="https://www.moe.gov.sg/post-secondary/admissions/pse/jc-and-mi" target="_blank" rel="noopener">Millennia<br>Institute</a></th><th scope="col"><a href="https://www.moe.gov.sg/post-secondary/admissions/pse/jc-and-mi" target="_blank" rel="noopener">Junior<br>College</a></th></tr>
+        </thead>
+        <tbody><tr><th scope="row"><b>5 G3</b><small>subjects</small></th><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td></tr><tr><th scope="row"><b>4 G3 <span>+</span> 1 G2</b><small>subjects &nbsp; subject</small></th><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td><td class="n"><span class="nw">NEW</span><span class="ck" aria-label="Available, new">✓</span></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td></tr><tr><th scope="row"><b>5 G2</b><small>subjects</small></th><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="x" aria-label="Not available"></td><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td></tr><tr><th scope="row"><b>4 G1</b><small>subjects</small></th><td class="y"><span class="ck" aria-label="Available">✓</span></td><td class="s"><span class="nw">NEW*</span><span class="ck" aria-label="Available, new (accelerated pathway)">✓</span></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td><td class="x" aria-label="Not available"></td></tr></tbody>
+      </table>
+    </div>
+    <p class="ov-note">*Students who offer 4 G1 subjects will join Year 1 of 3-Year Higher Nitec, and may be offered the accelerated pathway if they meet academic requirements during their Year 1 Semester 1 examinations. This pathway will allow them to attain a Higher Nitec in a shorter duration of about two years.</p>
+  </div>
+</dialog>
+
+<dialog class="ov gl" id="gl" aria-labelledby="glTitle">
+  <div class="ov-inner">
+    <button type="button" class="ov-close" id="glClose" aria-label="Close">&times;</button>
+    <h2 id="glTitle">Glossary</h2>
+    <div class="gloss">
+      <dl>
+        <div><dt>SEC</dt><dd>Singapore-Cambridge Secondary Education Certificate, the national exam taken at the end of secondary school.</dd></div>
+        <div><dt>G1 · G2 · G3</dt><dd>General 1, 2 and 3: the levels a subject can be taken at under Full Subject-Based Banding. G3 is the most demanding.</dd></div>
+        <div><dt>ELR2B2</dt><dd>English Language, 2 Relevant subjects and Best 2 other subjects. The aggregate used for polytechnic diploma courses (not for JC or MI). Lower is better.</dd></div>
+        <div><dt>ELR2B2-C</dt><dd>The ELR2B2 aggregate used for the Diploma in Nursing (24 or less). Lower is better.</dd></div>
+        <div><dt>L1R4</dt><dd>First Language (English or Higher Mother Tongue) and 4 Relevant subjects: a Humanities, a Maths or Science, one more Humanities, Maths or Science, and one other subject. All must be taken at G3. Used for Junior College (16 or less) and Millennia Institute (20 or less). Lower is better.</dd></div>
+        <div><dt>ELMAB3</dt><dd>English Language, Mathematics and Best 3 other subjects. The aggregate used for PFP, Higher Nitec and NAFA. Lower is better.</dd></div>
+        <div><dt>Aggregate</dt><dd>The total of the grade points of the subjects counted. Each course sets a maximum (its cut-off point).</dd></div>
+        <div><dt>A-Level</dt><dd>Singapore-Cambridge GCE Advanced Level, taken at a Junior College (2 years) or Millennia Institute (3 years).</dd></div>
+        <div><dt>ITE</dt><dd>Institute of Technical Education.</dd></div>
+        <div><dt>Higher Nitec</dt><dd>Higher National ITE Certificate. It can lead on to a polytechnic.</dd></div>
+        <div><dt>PFP</dt><dd>Polytechnic Foundation Programme: a 1-year foundation year that leads into a polytechnic diploma.</dd></div>
+        <div><dt>NAFA · NFP</dt><dd>Nanyang Academy of Fine Arts. NFP is the NAFA Foundation Programme.</dd></div>
+        <div><dt>LASALLE</dt><dd>LASALLE College of the Arts.</dd></div>
+      </dl>
+    </div>
+  </div>
+</dialog>
+<a class="jump" id="jump" href="#results" tabindex="-1" aria-hidden="true"><span class="j-ok"><b id="jOk">0</b> eligible</span><span class="j-bad"><b id="jBad">0</b> not eligible</span><span class="j-go">See results <span aria-hidden="true">↓</span></span></a>
+<script src="script.js"></script>
+</body>
+</html>
